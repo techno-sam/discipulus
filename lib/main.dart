@@ -1,4 +1,29 @@
+/*
+ *     Discipulus
+ *     Copyright (C) 2023  Sam Wagenaar
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import 'package:discipulus/ffi/words_low_level.dart';
 import 'package:flutter/material.dart';
+
+/*
+Doc for testing: https://docs.google.com/document/d/1_fPP0sB_04CedOcjFLA6ZnHpRLdPV5OQ-6uq-pyJLes/edit
+
+sentence for testing: In pictura_ est puella. (My translation: In the painting there is a girl.)
+ */
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +56,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Flutter Demo Home Page this is cool!!'),
     );
   }
 }
@@ -55,10 +80,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final WordsLL _words = WordsLL();
   int _counter = 0;
+  String _desc = "";
 
   void _incrementCounter() {
     setState(() {
+//      _desc = _words.test("this is a test ($_counter)");
+      _desc = _words.wordsDefault("puella");
+      print("desc: $_desc");
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
@@ -112,6 +142,10 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            Text(
+              _desc,
+              style: Theme.of(context).textTheme.headlineSmall,
+            )
           ],
         ),
       ),

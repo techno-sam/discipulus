@@ -1,0 +1,24 @@
+[package]
+name = "words_ffi"
+version = "1.0.0"
+edition = "2021"
+authors = ["Sam Wagenaar"]
+license = "GPL v3"
+publish = false
+
+[lib]
+name = "words_ffi"
+crate-type =["cdylib", "staticlib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bitflags = "2.4.0"
+duplicate = "1.0.0"
+shared_memory = "0.12.4"
+base64 = "0.21.4"
+libc = "0.2.0"
+num_enum = "0.7.0"
+clap = { version = "4.4.5", features = ["derive"] }
+ctrlc = "3.4.1"
+fs = "0.0.5"
