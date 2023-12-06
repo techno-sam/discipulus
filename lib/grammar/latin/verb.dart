@@ -16,6 +16,9 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/grammar/latin/lines.dart';
+import 'package:discipulus/utils/colors.dart';
+
 enum Tense {
   pres("Present"),
 /*  impf("Imperfect"),
@@ -53,6 +56,23 @@ class Person {
   String toString() {
     return "$person${plural ? 'P' : 'S'}";
   }
+
+  @override
+  int get hashCode => Object.hash(person, plural);
+
+  @override
+  bool operator ==(covariant Person other) {
+    if (super == other) return true;
+    return person == other.person && plural == other.plural;
+  }
+
+  static Iterable<Person> variants() {
+    return [
+      for (bool plural in [false, true])
+        for (int i = 1; i <= 3; i++)
+          Person(person: i, plural: plural),
+    ];
+  }
 }
 
 // note: for now, only doing indicative and imperative
@@ -78,23 +98,27 @@ enum Mood {
   }
 }
 
-class Verb {
+class Verb extends PartOfSpeech {
   late final Tense _tense; // meaningless for infinitives
   late final Person _person; // meaningless for infinitives
   late final Mood _mood;
   late final List<String> _principleParts;
   late final List<List<String>> _translations;
+  late final bool _intransitive;
 
   Tense get tense => _tense;
   Person get person => _person;
   Mood get mood => _mood;
   List<String> get principleParts => _principleParts;
   List<List<String>> get translations => _translations;
+  bool get intransitive => _intransitive;
 
   String get primaryTranslation => _translations[0][0];
 
   Verb({required Tense tense, required Person person, required Mood mood,
-    required String principleParts, required String translations}) : _mood = mood, _person = person, _tense = tense {
+    required String principleParts, required String translations,
+    required bool intransitive}) : _mood = mood, _person = person,
+        _tense = tense, _intransitive = intransitive {
     _principleParts = principleParts.split(",").map((s) => s.trim()).where((s) => s.isNotEmpty).toList(growable: false);
 
     Iterable<String> meanings = translations.split(";").map((s) => s.trim());
@@ -106,67 +130,36 @@ class Verb {
     ).toList(growable: false);
   }
 
-  factory Verb.fromWordsLines(String blob) {
-    bool filledInFromLine01 = false;
-    Tense? tense;
-    Person? person;
-    Mood? mood;
-    bool filledInFromLine02 = false;
-    String? principleParts;
-
-    for (String line in blob.split("\n")) {
-      line = line.trim();
-      List<String> parts = line.split(" ").map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-      if (line.startsWith("01")) { // note: Pearse Codes must be enabled for parsing to work
-        if (filledInFromLine01) continue;
-        if (parts[2] != "V") continue;
-        Tense? tense_ = Tense.decode(parts[5]);
-        Mood? mood_ = Mood.decode(parts[7]);
-        if (mood_ == Mood.inf) {
-          parts[9] = "S";
-          parts[8] = "1";
-        }
-        assert(parts[9] == "S" || parts[9] == "P", "Unexpected person plurality ${parts[9]}");
-        int personNum = int.parse(parts[8]);
-        Person person_ = Person(person: personNum, plural: parts[9] == "P");
-        if (tense_ != null && mood_ != null) {
-          tense = tense_;
-          mood = mood_;
-          person = person_;
-          filledInFromLine01 = true;
-          continue;
-        }
-      } else if (line.startsWith("02")) {
-        if (!filledInFromLine01) continue;
-        if (filledInFromLine02) continue;
-        List<String> pp = [];
-        for (int i = 1; i <= 4; i++) {
-          pp.add(parts[i].replaceAll(",", "").trim());
-          if (!parts[i].contains(",")) break;
-        }
-        principleParts = pp.join(", ");
-        filledInFromLine02 = true;
-        continue;
-      } else if (line.startsWith("03")) {
-        if (!filledInFromLine01 || !filledInFromLine02) continue;
-        String translations = line.replaceFirst("03", "").trim();
-        if (tense == null || mood == null || person == null || principleParts == null) {
-          throw "Impossible state, what???";
-        }
-        return Verb(
-          tense: tense,
-          mood: mood,
-          person: person,
-          principleParts: principleParts,
-          translations: translations
-        );
-      }
-    }
-    throw "Unable to parse verb from: ```$blob```";
+  Verb.lines({required L01Verb line01, required L02Verb line02, required L03Common line03}) {
+    _tense = line01.tense;
+    _person = line01.person;
+    _mood = line01.mood;
+    _principleParts = line02.parts;
+    _intransitive = line02.intransitive;
+    _translations = line03.translations;
   }
 
   @override
   String toString() {
-    return "Verb[${principleParts[0]} ${principleParts[1]}] $tense $mood $person -> $primaryTranslation";
+    return "Verb[${principleParts[0]} ${principleParts[1]}]${_intransitive ? "INTRANS" : ""} $tense $mood $person -> $primaryTranslation";
+  }
+
+  @override
+  PartsOfSpeech get pos => PartsOfSpeech.verb;
+
+  @override
+  String toColoredString() {
+    return "${Fore.LIGHTRED_EX}${toString()}${Fore.RESET}";
+  }
+
+  Verb copyWith({Tense? tense, Person? person, Mood? mood, String? principleParts, String? translations, bool? intransitive}) {
+    return Verb(
+      tense: tense ?? _tense,
+      person: person ?? _person,
+      mood: mood ?? _mood,
+      principleParts: principleParts ?? _principleParts.join(", "),
+      translations: translations ?? _translations.map((l) => l.join(", ")).join("; "),
+      intransitive: intransitive ?? _intransitive
+    );
   }
 }

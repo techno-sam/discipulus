@@ -29,16 +29,101 @@ Types of lines:
 There can be multiple 01-type lines leading up to each 02-03 pair
  */
 
-import 'package:discipulus/grammar/latin/verb.dart' show Tense, Mood, Person;
-import 'package:discipulus/grammar/latin/noun.dart' show Case, Gender;
+import 'package:discipulus/grammar/latin/verb.dart' show Mood, Person, Tense, Verb;
+import 'package:discipulus/grammar/latin/noun.dart' show Case, Gender, Noun;
 import 'package:discipulus/grammar/latin/regex.dart' show re;
 import 'package:discipulus/datatypes.dart';
+
+enum PartsOfSpeech {
+  verb,
+  noun
+}
+
+abstract class PartOfSpeech {
+  PartsOfSpeech get pos;
+
+  String toColoredString();
+}
 
 List<Line> parseToLines(String text) {
   List<Line> out = [];
   for (String line in text.split("\n")) {
     Line? parsed = Line.parse(line.trim());
     if (parsed != null) out.add(parsed);
+  }
+  return out;
+}
+
+enum _Mode {
+  none,
+  collectingNoun,
+  collectingVerb
+}
+
+List<PartOfSpeech> parseToPOS(List<Line> lines) {
+  List<PartOfSpeech> out = [];
+  List<L01Noun> nounBits = [];
+  List<L01Verb> verbBits = [];
+
+  _Mode mode = _Mode.none;
+  final PeekableIterator<Line> iter = lines.iterator.peekable();
+  while (iter.moveNext()) {
+    final line = iter.current;
+    switch (mode) {
+      case _Mode.none:
+        if (line is L01Noun) {
+          nounBits = [line];
+          verbBits = [];
+          mode = _Mode.collectingNoun;
+        } else if (line is L01Verb) {
+          nounBits = [];
+          verbBits = [line];
+          mode = _Mode.collectingVerb;
+        } else {
+          print("Unexpected line $line during mode $mode");
+        }
+        break;
+      case _Mode.collectingNoun:
+        if (line is L01Noun) {
+          nounBits.add(line);
+        } else if (line is L02Noun && iter.canPeek()) {
+          final Line next = iter.peeked;
+          if (next is L03Common) {
+            iter.moveNext();
+            for (final bit in nounBits) {
+              out.add(Noun.lines(line01: bit, line02: line, line03: next));
+            }
+          } else {
+            print("Incorrect next line $line");
+          }
+          mode = _Mode.none;
+          nounBits = [];
+          verbBits = [];
+        } else {
+          print("Failed to handle line: $line");
+        }
+        break;
+      case _Mode.collectingVerb:
+        if (line is L01Verb) {
+          verbBits.add(line);
+        } else if (line is L02Verb && iter.canPeek()) {
+          final Line next = iter.peeked;
+          if (next is L03Common) {
+            iter.moveNext();
+            for (final bit in verbBits) {
+              out.add(Verb.lines(line01: bit, line02: line, line03: next));
+            }
+          } else {
+            print("Incorrect next line $line");
+          }
+          mode = _Mode.none;
+          nounBits = [];
+          verbBits = [];
+        } else {
+          print("Failed to handle line: $line");
+        }
+        break;
+    }
   }
   return out;
 }
@@ -100,8 +185,9 @@ class L01Verb extends L01 {
 
 class L02Verb extends Line {
   final List<String> parts;
+  final bool intransitive;
 
-  L02Verb({required super.original, required this.parts}) {
+  L02Verb({required super.original, required this.parts, required this.intransitive}) {
     assert(parts.length == 3 || parts.length == 4);
   }
 
@@ -114,7 +200,7 @@ class L02Verb extends Line {
       print("[L02Verb] Invalid number of parts (${parts.length}) for $text");
       return null;
     }
-    return L02Verb(original: text, parts: parts);
+    return L02Verb(original: text, parts: parts, intransitive: match.namedGroup("intransitive") != null);
   }
 }
 

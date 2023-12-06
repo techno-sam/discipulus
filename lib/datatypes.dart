@@ -16,6 +16,8 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:math' as math;
+
 class Pair<A, B> {
   final A first;
   final B second;
@@ -24,6 +26,10 @@ class Pair<A, B> {
   @override
   String toString() {
     return 'Pair<$A, $B>[$first, $second]';
+  }
+
+  Pair<T, T2> cast<T, T2>() {
+    return Pair(first as T, second as T2);
   }
 }
 
@@ -62,4 +68,97 @@ extension CouplableList<E> on List<E> {
     }
     return Couple(this[0], this[1]);
   }
+}
+
+class PeekableIterator<E> implements Iterator<E> {
+  final Iterator<E> _wrapped;
+  bool _peeked = false;
+  E? _realCurrent = null;
+
+  PeekableIterator._(this._wrapped);
+
+  @override
+  E get current => _peeked ? _realCurrent! : _wrapped.current;
+
+  @override
+  bool moveNext() {
+    if (_peeked) {
+      _peeked = false;
+      _realCurrent = null;
+      return true;
+    } else {
+      return _wrapped.moveNext();
+    }
+  }
+
+  bool canPeek() {
+    if (_peeked) return true;
+    _realCurrent = _wrapped.current;
+    _peeked = _wrapped.moveNext();
+    if (!_peeked) {
+      _realCurrent = null;
+    }
+    return _peeked;
+  }
+
+  /// MUST call canPeek() first
+  E get peeked => _wrapped.current;
+}
+
+extension Peekable<E> on Iterator<E> {
+  PeekableIterator<E> peekable() => PeekableIterator._(this);
+}
+
+extension VariantExtendable<E> on List<List<E>> {
+  List<List<E>> _copy() {
+    return map((l) => [...l]).toList();
+  }
+
+  void extendVariants(List<E> other) {
+    if (isEmpty) {
+      addAll(other.map((e) => [e]));
+    } else {
+      final List<List<E>> old = _copy();
+      clear();
+      old.map((l) => [...l, ...other]).forEach(add);
+    }
+  }
+}
+
+extension MinMaxIterable<E extends num> on Iterable<E> {
+  E get max => reduce(math.max<E>);
+  E get min => reduce(math.min<E>);
+}
+
+extension MinMaxWithIterable<E> on Iterable<E> {
+  E maxWith(int Function(E) mapper) => reduce((a, b) => mapper.call(a) > mapper.call(b) ? a : b);
+  E minWith(int Function(E) mapper) => reduce((a, b) => mapper.call(a) < mapper.call(b) ? a : b);
+}
+
+extension WherePairIterable<A, B> on Iterable<Pair<A, B>> {
+  Iterable<Pair<T, B>> whereFirstType<T>() {
+    return where((p) => p.first is T).map((p) => p.cast<T, B>());
+  }
+
+  Iterable<Pair<A, T>> whereSecondType<T>() {
+    return where((p) => p.second is T).map((p) => p.cast<A, T>());
+  }
+
+  Iterable<Pair<T, T2>> whereBothTypes<T, T2>() {
+    return where((p) => p.first is T && p.second is T2).map((p) => p.cast<T, T2>());
+  }
+}
+
+extension Enumeratable<E> on Iterable<E> {
+  Iterable<Pair<int, E>> get enumerate sync* {
+    int i = 0;
+    for (final E e in this) {
+      yield Pair(i, e);
+      i++;
+    }
+  }
+}
+
+extension Capitalizable on String {
+  String get capitalize => isEmpty ? this : "${this[0].toUpperCase()}${length == 1 ? "" : substring(1)}";
 }

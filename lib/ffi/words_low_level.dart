@@ -22,8 +22,6 @@ import 'dart:ffi';
 import 'dart:io' show Platform;
 import 'package:ffi/ffi.dart';
 
-import 'package:flutter/foundation.dart';
-
 typedef str_ptr = Pointer<Utf8>;
 
 /* Rust/C */
@@ -58,15 +56,14 @@ class WordsLL {
   static late DynamicLibrary _lib;
   static bool _init = false;
 
-  WordsLL() {
-    _initLib();
+  WordsLL({required bool debugMode}) {
+    _initLib(debugMode: debugMode);
   }
 
-  static void _initLib() {
+  static void _initLib({required bool debugMode}) {
     if (!_init) {
       // for debugging and tests
-      if (kDebugMode &&
-          (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      if (debugMode && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
         _lib = load(basePath: 'target/debug/');
       } else {
         _lib = load();

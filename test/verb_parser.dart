@@ -20,7 +20,7 @@ import 'package:discipulus/ffi/words_low_level.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-final WordsLL words = WordsLL();
+final WordsLL words = WordsLL(debugMode: true);
 
 void testVerb(String verb, Tense tense, Mood group, int person, bool plural) {
   test('Verb Parsing $verb', () async {

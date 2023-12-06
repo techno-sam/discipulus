@@ -16,7 +16,11 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/grammar/english/micro_translation.dart';
 import 'package:discipulus/grammar/latin/lines.dart';
+import 'package:discipulus/grammar/latin/sentence.dart';
+import 'package:discipulus/grammar/latin/verb.dart';
+import 'package:discipulus/utils/colors.dart';
 
 const String puellaWords = """01 puell.a              N      1 1 NOM S F                 
 01 puell.a              N      1 1 VOC S F                 
@@ -28,12 +32,54 @@ const String vocatWords = """01 voc.at               V      1 1 PRES ACTIVE  IND
 02 voco, vocare, vocavi, vocatus  V (1st)   [XXXAX]  
 03 call, summon; name; call upon;""";
 
+const String pueriWords = """01 puer.i               N      2 3 GEN S M                 
+01 puer.i               N      2 3 LOC S M                 
+01 puer.i               N      2 3 NOM P M                 
+01 puer.i               N      2 3 VOC P M                 
+02 puer, pueri  N (2nd) M   [XXXAX]  
+03 boy, lad, young man; servant; (male) child; [a puere => from boyhood];""";
+
 void main() {
   print("run/trot/gallop, hurry/hasten/speed".split(RegExp(r"[,/]")));
 
   print("puella:");
-  print(parseToLines(puellaWords));
+  final puellaLines = parseToLines(puellaWords);
+  print(puellaLines);
+  print("possible forms:");
+  for (final pos in parseToPOS(puellaLines)) {
+    print("\t$pos");
+  }
 
-  print("\nvocat:");
-  print(parseToLines(vocatWords));
+  print("\n\nvocat:");
+  final vocatLines = parseToLines(vocatWords);
+  print(vocatLines);
+  print("possible forms:");
+  var vocatForms = parseToPOS(vocatLines);
+  for (final pos in vocatForms) {
+    print("\t$pos");
+  }
+  final Verb? vocatVerb = vocatForms.where((pos) => pos is Verb).map((pos) => pos as Verb).firstOrNull;
+  if (vocatVerb != null) {
+    printTranslationTable(vocatVerb);
+  }
+
+  print("\n\npueri:");
+  final pueriLines = parseToLines(pueriWords);
+  print(pueriLines);
+  print("possible forms:");
+  for (final pos in parseToPOS(pueriLines)) {
+    print("\t$pos");
+  }
+
+  const testSentences = [
+    "puella vocat",
+    "ambulo",
+    "puer ambulat",
+    "regimus"
+  ];
+  for (final String testSentence in testSentences) {
+    print("\n\nAll possibilities for ${Style.BRIGHT}$testSentence${Style.RESET_ALL}${Fore.LIGHTBLACK_EX}${Style.DIM}");
+    final bundle = SentenceBundle.fromSentence(testSentence, debugMode: true);
+    bundle.printAllPossibilities();
+  }
 }

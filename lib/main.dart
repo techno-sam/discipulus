@@ -17,6 +17,7 @@
  */
 
 import 'package:discipulus/ffi/words_low_level.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /*
@@ -80,7 +81,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final WordsLL _words = WordsLL();
+  final WordsLL _words = WordsLL(debugMode: kDebugMode);
   int _counter = 0;
   String _desc = "";
 
