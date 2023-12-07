@@ -43,6 +43,10 @@ enum Case {
   String toString() {
     return "$name($description)";
   }
+
+  static Iterable<Pair<Case, bool>> get allCases {
+    return [false, true].map((b) => Case.values.map((c) => Pair(c, b))).expand((e) => e);
+  }
 }
 
 enum Gender {
@@ -70,7 +74,7 @@ enum Gender {
 }
 
 class Noun extends PartOfSpeech {
-  static final Noun bob = Noun._(
+  static final Noun bob = Noun.allTheParts(
     caze: Case.nom,
     plural: false,
     gender: Gender.m,
@@ -81,7 +85,7 @@ class Noun extends PartOfSpeech {
     isProper: true
   );
 
-  static final Noun bobAndJoe = Noun._(
+  static final Noun bobAndJoe = Noun.allTheParts(
       caze: Case.nom,
       plural: true,
       gender: Gender.m,
@@ -109,7 +113,7 @@ class Noun extends PartOfSpeech {
   String get primaryTranslation => _translations[0][0];
   String get properConsideringPrimaryTranslation => isProper ? primaryTranslation.capitalize : "the $primaryTranslation";
 
-  Noun._({
+  Noun.allTheParts({
     required Case caze,
     required bool plural,
     required Gender gender,

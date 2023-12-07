@@ -18,6 +18,8 @@
 
 import 'package:discipulus/grammar/english/micro_translation.dart';
 import 'package:discipulus/grammar/latin/lines.dart';
+import 'package:discipulus/grammar/latin/noun.dart';
+import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
 import 'package:discipulus/utils/colors.dart';
@@ -41,6 +43,12 @@ const String pueriWords = """01 puer.i               N      2 3 GEN S M
 
 void main() {
   print("run/trot/gallop, hurry/hasten/speed".split(RegExp(r"[,/]")));
+
+  print("all cases:");
+  print(Case.allCases);
+
+  print("Forms of 'Cornelia'");
+  properNames.properNames["Cornelia"]!.prettyPrint();
 
   print("puella:");
   final puellaLines = parseToLines(puellaWords);
@@ -72,9 +80,9 @@ void main() {
   }
 
   const testSentences = [
-    "puella vocat",
+    "puella ambulat",
     "ambulo",
-    "puer ambulat",
+    "puer vocat",
     "regimus"
   ];
   for (final String testSentence in testSentences) {

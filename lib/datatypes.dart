@@ -18,6 +18,8 @@
 
 import 'dart:math' as math;
 
+import 'package:discipulus/utils/colors.dart';
+
 class Pair<A, B> {
   final A first;
   final B second;
@@ -30,6 +32,18 @@ class Pair<A, B> {
 
   Pair<T, T2> cast<T, T2>() {
     return Pair(first as T, second as T2);
+  }
+
+  @override
+  int get hashCode => Object.hash(first, second);
+
+  @override
+  bool operator ==(Object other) {
+    if (super == other) return true;
+    if (other is Pair<A, B>) {
+      return first == other.first && second == other.second;
+    }
+    return false;
   }
 }
 
@@ -161,4 +175,28 @@ extension Enumeratable<E> on Iterable<E> {
 
 extension Capitalizable on String {
   String get capitalize => isEmpty ? this : "${this[0].toUpperCase()}${length == 1 ? "" : substring(1)}";
+}
+
+extension ShallowCopiable<E> on List<E> {
+  List<E> shallowCopy() {
+    return [...this];
+  }
+}
+
+extension FunctionName<R, P> on R Function(P) {
+  String get name => toString().split("'")[1];
+}
+
+extension ColorfulList on List<bool> {
+  String get colorCoded {
+    String out = "${Fore.RESET}[";
+    for (int i = 0; i < length; i++) {
+      out += this[i] ? "${Fore.GREEN}true${Fore.RESET}" : "${Fore.RED}false${Fore.RESET}";
+      if (i != length - 1) {
+        out += ", ";
+      }
+    }
+    out += "]";
+    return out;
+  }
 }

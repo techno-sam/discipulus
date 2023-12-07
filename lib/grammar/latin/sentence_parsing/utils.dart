@@ -22,15 +22,25 @@ import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
 
 Pair<int, Verb>? getVerb(Sentence sentence) {
-  return sentence.words.enumerate.whereSecondType<Verb>().firstOrNull;
+  return sentence.unusedWords.enumerate.whereSecondType<Verb>().firstOrNull;
 }
 
-Pair<int, Noun>? getNearestNoun(Sentence sentence, Person verbPerson, int verbIndex) {
+Pair<int, Noun>? getNearestSubjectNoun(Sentence sentence, Person verbPerson, int verbIndex) {
   if (verbPerson.person != 3) return null;
   // Bob walks; Bob and Joe walk
-  final nouns = sentence.words.enumerate
+  final nouns = sentence.unusedWords.enumerate
       .whereSecondType<Noun>()
       .where((p) => p.second.plural == verbPerson.plural && p.second.caze == Case.nom);
   if (nouns.isEmpty) return null;
   return nouns.minWith((p) => (verbIndex - p.first).abs());
+}
+
+Pair<int, Noun>? getNearestGeneralNoun(Sentence sentence, int originIndex,
+    {required Case caze, Person? targetPerson}) {
+  // Bob walks; Bob and Joe walk
+  final nouns = sentence.unusedWords.enumerate
+      .whereSecondType<Noun>()
+      .where((p) => (targetPerson == null || p.second.plural == targetPerson.plural) && p.second.caze == caze);
+  if (nouns.isEmpty) return null;
+  return nouns.minWith((p) => (originIndex - p.first).abs());
 }

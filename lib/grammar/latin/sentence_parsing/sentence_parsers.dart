@@ -16,9 +16,12 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart' as english;
+import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
+import 'package:discipulus/utils/colors.dart';
 
 import 'utils.dart';
 
@@ -37,13 +40,48 @@ String? standaloneVerb(Sentence sentence) {
 String? verbWithNominative(Sentence sentence) {
   final verb = getVerb(sentence);
   if (verb == null) return null;
-  final noun = getNearestNoun(sentence, verb.second.person, verb.first);
+  final noun = getNearestSubjectNoun(sentence, verb.second.person, verb.first);
   if (noun == null) return null;
   return english.translateVerb(verb.second, noun.second);
 }
 
+/*
+Sentence order:
+
+[verb-subject pair]
+[{accusative noun | preposition-accusative pair}]
+[by/from/with {ablative noun | preposition-ablative pair}]
+ */
+String? accountingBased(Sentence sentence) {
+  final AccountingSentence accounting = sentence.makeAccounting();
+
+  final verb = getVerb(accounting);
+  if (verb == null) return null;
+  accounting.accountFor(verb.first);
+
+  final subjectNoun = getNearestSubjectNoun(accounting, verb.second.person, verb.first);
+  if (subjectNoun != null) {
+    accounting.accountFor(subjectNoun.first);
+  }
+
+  String translatedSentence = english.translateVerb(verb.second, subjectNoun?.second);
+
+  final ablativeNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.abl);
+  if (ablativeNoun != null) {
+    accounting.accountFor(ablativeNoun.first);
+    translatedSentence += " by/from/with ${ablativeNoun.second.properConsideringPrimaryTranslation}";
+  }
+
+  if (accounting.isNotFullyAccountedFor) {
+    print("${Fore.LIGHTBLACK_EX}${Style.DIM}> accounting: ${accounting.accountingSummary}${Fore.LIGHTBLACK_EX} would be: `$translatedSentence`${Style.RESET_ALL}");
+    return null;
+  }
+  return translatedSentence;
+}
+
 String? superParse(Sentence sentence) {
-  for (final parser in [standaloneVerb, verbWithNominative]) {
+  for (final parser in [accountingBased, standaloneVerb, verbWithNominative]) {
+    print("${Fore.LIGHTBLACK_EX}${Style.DIM}> trying parser: ${parser.name}${Style.RESET_ALL}");
     final result = parser.call(sentence);
     if (result != null) return result;
   }

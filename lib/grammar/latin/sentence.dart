@@ -44,6 +44,40 @@ class Sentence {
     out += "]${Style.RESET_ALL}";
     return out;
   }
+
+  List<PartOfSpeech> get unusedWords => words;
+
+  AccountingSentence makeAccounting() {
+    return AccountingSentence(words: words.shallowCopy());
+  }
+}
+
+class AccountingSentence extends Sentence {
+  late final List<bool> _accountedFor;
+  AccountingSentence({required super.words}) {
+    _accountedFor = List.filled(words.length, false);
+  }
+
+  String get accountingSummary => _accountedFor.colorCoded;
+
+  bool isAccountedFor(int index) {
+    return _accountedFor[index];
+  }
+
+  void accountFor(int index) {
+    _accountedFor[index] = true;
+  }
+
+  bool get isFullyAccountedFor {
+    return _accountedFor.every((b) => b);
+  }
+
+  bool get isNotFullyAccountedFor {
+    return _accountedFor.any((b) => !b);
+  }
+
+  @override
+  List<PartOfSpeech> get unusedWords => words.enumerate.where((e) => !isAccountedFor(e.first)).map((e) => e.second).toList();
 }
 
 class SentenceBundle {
