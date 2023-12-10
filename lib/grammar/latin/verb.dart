@@ -44,6 +44,37 @@ enum Tense {
   }
 }
 
+enum VerbKind {
+  x("All, none, unknown"),
+/*  to_be("To be"),
+  to_being("To be (compounds)"),
+  gen("taking genitive"),
+  dat("taking dative"),
+  abl("taking ablative"),*/
+  trans("transitive"),
+  intrans("intransitive"),
+/*  impers("impersonal"),
+  dep("deponent"),
+  semidep("semi-deponent"),
+  perfdep("perfect deponent"),*/
+  ;
+
+  final String description;
+  const VerbKind(this.description);
+
+  static VerbKind? decode(String str) {
+    str = str.toLowerCase().trim();
+    return VerbKind.values
+        .where((t) => t.name.toLowerCase() == str)
+        .firstOrNull;
+  }
+
+  @override
+  String toString() {
+    return "$name($description)";
+  }
+}
+
 class Person {
   final int person;
   final bool plural;
@@ -104,21 +135,23 @@ class Verb extends Word {
   late final Mood _mood;
   late final List<String> _principleParts;
   late final List<List<String>> _translations;
-  late final bool _intransitive;
+  late final VerbKind _verbKind;
 
   Tense get tense => _tense;
   Person get person => _person;
   Mood get mood => _mood;
   List<String> get principleParts => _principleParts;
   List<List<String>> get translations => _translations;
-  bool get intransitive => _intransitive;
+  VerbKind get verbKind => _verbKind;
+  bool get isToBe => principleParts[0] == "sum" && principleParts[1] == "esse"
+      && principleParts[2] == "fui" && principleParts[3] == "futurus";
 
   String get primaryTranslation => _translations[0][0];
 
   Verb({required Tense tense, required Person person, required Mood mood,
     required String principleParts, required String translations,
-    required bool intransitive}) : _mood = mood, _person = person,
-        _tense = tense, _intransitive = intransitive {
+    required VerbKind verbKind}) : _mood = mood, _person = person,
+        _tense = tense, _verbKind = verbKind {
     _principleParts = principleParts.split(",").map((s) => s.trim()).where((s) => s.isNotEmpty).toList(growable: false);
 
     Iterable<String> meanings = translations.split(";").map((s) => s.trim());
@@ -135,13 +168,13 @@ class Verb extends Word {
     _person = line01.person;
     _mood = line01.mood;
     _principleParts = line02.parts;
-    _intransitive = line02.intransitive;
+    _verbKind = line02.verbKind;
     _translations = line03.translations;
   }
 
   @override
   String toString() {
-    return "Verb[${principleParts[0]} ${principleParts[1]}]${_intransitive ? "INTRANS" : ""} $tense $mood $person -> $primaryTranslation";
+    return "Verb[${principleParts[0]} ${principleParts[1]}]${verbKind == VerbKind.x ? "" : verbKind} $tense $mood $person -> $primaryTranslation";
   }
 
   @override
@@ -152,14 +185,14 @@ class Verb extends Word {
     return "${Fore.LIGHTRED_EX}${toString()}${Fore.RESET}";
   }
 
-  Verb copyWith({Tense? tense, Person? person, Mood? mood, String? principleParts, String? translations, bool? intransitive}) {
+  Verb copyWith({Tense? tense, Person? person, Mood? mood, String? principleParts, String? translations, VerbKind? verbKind}) {
     return Verb(
       tense: tense ?? _tense,
       person: person ?? _person,
       mood: mood ?? _mood,
       principleParts: principleParts ?? _principleParts.join(", "),
       translations: translations ?? _translations.map((l) => l.join(", ")).join("; "),
-      intransitive: intransitive ?? _intransitive
+      verbKind: verbKind ?? _verbKind
     );
   }
 }

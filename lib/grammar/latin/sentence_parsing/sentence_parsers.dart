@@ -84,10 +84,12 @@ String? accountingBased(Sentence sentence) {
     pieces.add((SentencePiece.indirectObject, "by/from/with ${ablativeNoun.second.properConsideringPrimaryTranslation}"));
   }
 
-  final accusativeNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.acc);
-  if (accusativeNoun != null) {
-    accounting.accountFor(accusativeNoun.first);
-    pieces.add((SentencePiece.object, accusativeNoun.second.properConsideringPrimaryTranslation));
+  final objectNoun = verb.second.verbKind == VerbKind.intrans
+      ? null
+      : getNearestGeneralNoun(accounting, verb.first, caze: verb.second.isToBe ? Case.nom : Case.acc);
+  if (objectNoun != null) {
+    accounting.accountFor(objectNoun.first);
+    pieces.add((SentencePiece.object, objectNoun.second.verbProperConsideringPrimaryTranslation(verb.second)));
   }
 
   pieces.sort(((a, b) => a.$1.ordering.compareTo(b.$1.ordering)));

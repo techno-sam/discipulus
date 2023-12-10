@@ -143,7 +143,10 @@ extension VariantExtendable<E> on List<List<E>> {
     } else {
       final List<List<E>> old = _copy();
       clear();
-      old.map((l) => [...l, ...other]).forEach(add);
+      for (final item in other) {
+        old.map((l) => [...l, item]).forEach(add);
+      }
+//      old.map((l) => [...l, ...other]).forEach(add);
     }
   }
 }
@@ -254,4 +257,8 @@ extension PairwiseList<E> on List<E> {
     for (int i = 0; i < length - 1; i++)
       Pair(this[i], this[i+1]),
   ];
+}
+
+extension WeightedAbs on int {
+  int weightedAbs() => this < 0 ? 1-this : this;
 }

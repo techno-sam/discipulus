@@ -21,6 +21,9 @@ import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/utils/colors.dart';
 
+import 'adjective.dart';
+import 'verb.dart';
+
 enum Case {
   nom("Nominative"),
   gen("Genitive"),
@@ -113,6 +116,14 @@ class Noun extends Word {
   String get primaryTranslation => _translations[0][0];
   String get properConsideringPrimaryTranslation => isProper ? primaryTranslation.capitalize : "the $primaryTranslation";
 
+  String verbProperConsideringPrimaryTranslation(Verb verb) {
+    if (isProper) {
+      return primaryTranslation.capitalize;
+    } else {
+      return "${verb.isToBe ? "a" : "the"} $primaryTranslation";
+    }
+  }
+
   Noun.allTheParts({
     required Case caze,
     required bool plural,
@@ -143,5 +154,23 @@ class Noun extends Word {
   @override
   String toColoredString() {
     return "${Fore.BLUE}${toString()}${Fore.RESET}";
+  }
+
+  bool canModify(Adjective adjective) {
+    if (isProper) throw "Modifying a proper noun is not (yet) supported";
+    return adjective.plural == plural && adjective.gender == gender && adjective.caze == caze;
+  }
+  
+  Noun? modify(Adjective adjective) {
+    if (!canModify(adjective)) return null;
+    return ModifiedNoun.allTheParts(
+      caze: caze,
+      plural: plural,
+      gender: gender,
+      parts: parts,
+      translations: translations,
+      isProper: isProper,
+      adjectives: [adjective]
+    );
   }
 }

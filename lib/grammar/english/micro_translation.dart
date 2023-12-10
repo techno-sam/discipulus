@@ -17,8 +17,45 @@
  */
 
 import 'package:discipulus/datatypes.dart';
+import 'package:discipulus/grammar/latin/adjective.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
+
+String _appendE(String original, String suffix) {
+  if (original.endsWith("e")) {
+    return original + suffix;
+  } else if (original.endsWith("y")) {
+    return "${original.substring(0, original.length - 1)}ie$suffix";
+  } else {
+    return "${original}e$suffix";
+  }
+}
+
+String applyComparison(String adjectiveTranslation, ComparisonType comparison) {
+  switch (comparison) {
+    case ComparisonType.pos:
+      return adjectiveTranslation;
+    case ComparisonType.comp:
+      return _appendE(adjectiveTranslation, "r");
+    case ComparisonType.Super:
+      return _appendE(adjectiveTranslation, "st");
+    default:
+      return adjectiveTranslation;
+  }
+}
+
+String _conjugateToBe(Person person) {
+  final singular = !person.plural;
+  switch (person.person) {
+    case 1:
+      return singular ? "am": "are";
+    case 2:
+      return singular ? "are": "are";
+    case 3:
+      return singular ? "is" : "are";
+  }
+  return "";
+}
 
 String translateVerb(Verb verb, [Noun? subject]) {
   String out = "";
@@ -37,7 +74,9 @@ String translateVerb(Verb verb, [Noun? subject]) {
       break;
   }
   out += " ";
-  if (person == 3 && !plural) {
+  if (verb.isToBe) {
+    out += _conjugateToBe(verb.person);
+  } else if (person == 3 && !plural) {
     out += "${verb.primaryTranslation}s";
   } else {
     out += verb.primaryTranslation;

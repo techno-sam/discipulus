@@ -50,6 +50,9 @@ void main() {
   print("Forms of 'Cornelia'");
   properNames.properNames["Cornelia"]!.prettyPrint();
 
+  print("\nForms of 'Marcus'");
+  properNames.properNames["Marcus"]!.prettyPrint();
+
   print("puella:");
   final puellaLines = parseToLines(puellaWords);
   print(puellaLines);
@@ -86,7 +89,13 @@ void main() {
     "regimus",
     "Cornelia ambulat",
     "Marcus audit fragorem", // originally Marcus audit magnum fragorem
-    "Marcus audit magnum fragorem"
+    "Marcus audit magnum fragorem",
+    "Marcus audit fragorem magnissimum",
+    "Marcum adjuvat Cornelia", // Object Verb Subject
+    "Cornelia ambulat Marcum", // 'ambulat' is intransitive, so this should fail to translate
+    "Flavia vocat puellam Romanam",
+    "Flavia est puella Romana",
+    "Cornelia et Flavia vocant"
   ];
   for (final String testSentence in testSentences) {
     print("\n\nAll possibilities for ${Style.BRIGHT}$testSentence${Style.RESET_ALL}${Fore.LIGHTBLACK_EX}${Style.DIM}");

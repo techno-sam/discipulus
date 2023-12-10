@@ -29,14 +29,17 @@ Types of lines:
 There can be multiple 01-type lines leading up to each 02-03 pair
  */
 
-import 'package:discipulus/grammar/latin/verb.dart' show Mood, Person, Tense, Verb;
+import 'package:discipulus/grammar/latin/verb.dart' show Mood, Person, Tense, Verb, VerbKind;
 import 'package:discipulus/grammar/latin/noun.dart' show Case, Gender, Noun;
 import 'package:discipulus/grammar/latin/regex.dart' show re;
 import 'package:discipulus/datatypes.dart';
 
+import 'adjective.dart';
+
 enum PartsOfSpeech {
   verb,
-  noun
+  noun,
+  adjective
 }
 
 abstract class Word {
@@ -57,13 +60,13 @@ List<Line> parseToLines(String text) {
 enum _Mode {
   none,
   collectingNoun,
-  collectingVerb
+  collectingVerb,
+  collectingAdjective
 }
 
 List<Word> parseToPOS(List<Line> lines) {
   List<Word> out = [];
-  List<L01Noun> nounBits = [];
-  List<L01Verb> verbBits = [];
+  List<dynamic> bits = [];
 
   _Mode mode = _Mode.none;
   final PeekableIterator<Line> iter = lines.iterator.peekable();
@@ -72,53 +75,75 @@ List<Word> parseToPOS(List<Line> lines) {
     switch (mode) {
       case _Mode.none:
         if (line is L01Noun) {
-          nounBits = [line];
-          verbBits = [];
+          bits = [line];
           mode = _Mode.collectingNoun;
         } else if (line is L01Verb) {
-          nounBits = [];
-          verbBits = [line];
+          bits = [line];
           mode = _Mode.collectingVerb;
+        } else if (line is L01Adjective) {
+          bits = [line];
+          mode = _Mode.collectingAdjective;
         } else {
           print("Unexpected line $line during mode $mode");
         }
         break;
       case _Mode.collectingNoun:
         if (line is L01Noun) {
-          nounBits.add(line);
+          bits.add(line);
         } else if (line is L02Noun && iter.canPeek()) {
           final Line next = iter.peeked;
           if (next is L03Common) {
             iter.moveNext();
-            for (final bit in nounBits) {
+            for (final L01Noun bit in bits) {
               out.add(Noun.lines(line01: bit, line02: line, line03: next));
             }
           } else {
             print("Incorrect next line $line");
           }
           mode = _Mode.none;
-          nounBits = [];
-          verbBits = [];
+          bits = [];
         } else {
           print("Failed to handle line: $line");
         }
         break;
       case _Mode.collectingVerb:
         if (line is L01Verb) {
-          verbBits.add(line);
+          bits.add(line);
         } else if (line is L02Verb && iter.canPeek()) {
-          final Line next = iter.peeked;
+          Line next = iter.peeked;
+          while (next is L02Verb && iter.canPeek()) {
+            iter.moveNext();
+            next = iter.peeked;
+          }
           if (next is L03Common) {
             iter.moveNext();
-            for (final bit in verbBits) {
+            for (final L01Verb bit in bits) {
               out.add(Verb.lines(line01: bit, line02: line, line03: next));
             }
           } else {
             print("Incorrect next line $line");
           }
           mode = _Mode.none;
-          nounBits = [];
-          verbBits = [];
+          bits = [];
+        } else {
+          print("Failed to handle line: $line");
+        }
+        break;
+      case _Mode.collectingAdjective:
+        if (line is L01Adjective) {
+          bits.add(line);
+        } else if (line is L02Adjective && iter.canPeek()) {
+          final Line next = iter.peeked;
+          if (next is L03Common) {
+            iter.moveNext();
+            for (final L01Adjective bit in bits) {
+              out.add(Adjective.lines(line01: bit, line02: line, line03: next));
+            }
+          } else {
+            print("Incorrect next line $line");
+          }
+          mode = _Mode.none;
+          bits = [];
         } else {
           print("Failed to handle line: $line");
         }
@@ -139,6 +164,8 @@ class Line {
       L02Verb.parse,
       L01Noun.parse,
       L02Noun.parse,
+      L01Adjective.parse,
+      L02Adjective.parse,
       L03Common.parse,
     ];
     for (Line? Function(String) parser in parsers) {
@@ -154,6 +181,10 @@ class L01 extends Line {
 
   const L01({required super.original, required this.split});
 }
+
+/********/
+/* Verb */
+/********/
 
 class L01Verb extends L01 {
   final Tense tense;
@@ -185,9 +216,9 @@ class L01Verb extends L01 {
 
 class L02Verb extends Line {
   final List<String> parts;
-  final bool intransitive;
+  final VerbKind verbKind;
 
-  L02Verb({required super.original, required this.parts, required this.intransitive}) {
+  L02Verb({required super.original, required this.parts, required this.verbKind}) {
     assert(parts.length == 3 || parts.length == 4);
   }
 
@@ -196,13 +227,25 @@ class L02Verb extends Line {
     if (match == null) return null;
 
     List<String> parts = match.namedGroup("parts")!.split(", ");
+    String verbKind_ = (match.namedGroup("verb_type") ?? "X").toLowerCase();
+
+    VerbKind? verbKind = VerbKind.decode(verbKind_);
+
     if (parts.length < 3 || parts.length > 4) {
       print("[L02Verb] Invalid number of parts (${parts.length}) for $text");
       return null;
     }
-    return L02Verb(original: text, parts: parts, intransitive: match.namedGroup("intransitive") != null);
+    if (verbKind == null) {
+      print("[L02Verb] Verb kind not found for $text");
+      return null;
+    }
+    return L02Verb(original: text, parts: parts, verbKind: verbKind);
   }
 }
+
+/********/
+/* Noun */
+/********/
 
 class L01Noun extends L01 {
   final Case caze; // not a typo, 'case' is a reserved word
@@ -252,6 +295,60 @@ class L02Noun extends Line {
     return L02Noun(original: text, parts: parts, gender: gender);
   }
 }
+
+/********/
+/* Adjective */
+/********/
+
+class L01Adjective extends L01 {
+  final Case caze; // not a typo, 'case' is a reserved word
+  final bool plural;
+  final Gender gender;
+  final ComparisonType comparisonType;
+
+  const L01Adjective({required super.original, required super.split, required this.caze, required this.plural, required this.gender, required this.comparisonType});
+
+  static L01Adjective? parse(String text) {
+    RegExpMatch? match = re.l01adjective.firstMatch(text);
+    if (match == null) return null;
+
+    String split_ = match.namedGroup("split")!;
+    String case_ = match.namedGroup("case")!.toLowerCase();
+    bool plural_ = match.namedGroup("person_pl")!.toLowerCase() == "p";
+    String gender_ = match.namedGroup("gender")!.toLowerCase();
+    String comparisonType_ = match.namedGroup("comparison_type")!.toLowerCase();
+
+    Case? caze = Case.decode(case_);
+    Gender? gender = Gender.decode(gender_);
+    ComparisonType? comparisonType = ComparisonType.decode(comparisonType_);
+    if (caze == null || gender == null || comparisonType == null) {
+      print("[L01Adjective] Case, gender, or comparison type not found for $text");
+      return null;
+    }
+    return L01Adjective(original: text, split: split_, caze: caze, plural: plural_, gender: gender, comparisonType: comparisonType);
+  }
+}
+
+class L02Adjective extends Line {
+  final List<String> parts;
+  L02Adjective({required super.original, required this.parts}) {
+    assert(parts.length == 3 || parts.length == 4);
+  }
+
+  static L02Adjective? parse(String text) {
+    RegExpMatch? match = re.l02adjective.firstMatch(text);
+    if (match == null) return null;
+
+    String parts_ = match.namedGroup("parts")!;
+
+    List<String> parts = parts_.split(", ");
+    return L02Adjective(original: text, parts: parts);
+  }
+}
+
+/***********/
+/* Common */
+/**********/
 
 class L03Common extends Line {
   final List<List<String>> translations;

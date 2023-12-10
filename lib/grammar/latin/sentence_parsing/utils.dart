@@ -17,6 +17,7 @@
  */
 
 import 'package:discipulus/datatypes.dart';
+import 'package:discipulus/grammar/latin/adjective.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
@@ -31,6 +32,32 @@ Pair<Pair<int, A>, Pair<int, B>>? _getNearestPair<A, B>(Sentence sentence,
   return options.minWith((p) => ((targetIndex*2) - (p.first.first + p.second.first)).abs());
 }
 
+void applyAdjectives(Sentence original) {
+  if (original is AccountingSentence) {
+    throw "Cannot apply adjectives to an accounting sentence";
+  }
+  // handle adjective-noun pairs
+  var nearestPair = _getNearestPair<Adjective, Noun>(original, (a, b) => b.canModify(a), 0);
+  while (nearestPair != null) {
+    final adjective = nearestPair.first.second;
+    final noun = nearestPair.second.second;
+    final modified = noun.modify(adjective)!;
+    original.words[nearestPair.first.first] = modified;
+    original.words.removeAt(nearestPair.second.first);
+    nearestPair = _getNearestPair<Adjective, Noun>(original, (a, b) => b.canModify(a), 0);
+  }
+  // handle noun-adjective pairs
+  var nearestPair2 = _getNearestPair<Noun, Adjective>(original, (a, b) => a.canModify(b), 0);
+  while (nearestPair2 != null) {
+    final adjective = nearestPair2.second.second;
+    final noun = nearestPair2.first.second;
+    final modified = noun.modify(adjective)!;
+    original.words[nearestPair2.first.first] = modified;
+    original.words.removeAt(nearestPair2.second.first);
+    nearestPair2 = _getNearestPair<Noun, Adjective>(original, (a, b) => a.canModify(b), 0);
+  }
+}
+
 Pair<int, Verb>? getVerb(Sentence sentence) {
   return sentence.enumeratedUnusedWords.whereSecondType<Verb>().firstOrNull;
 }
@@ -42,7 +69,7 @@ Pair<int, Noun>? getNearestSubjectNoun(Sentence sentence, Person verbPerson, int
       .whereSecondType<Noun>()
       .where((p) => p.second.plural == verbPerson.plural && p.second.caze == Case.nom);
   if (nouns.isEmpty) return null;
-  return nouns.minWith((p) => (verbIndex - p.first).abs());
+  return nouns.minWith((p) => (verbIndex - p.first).weightedAbs());
 }
 
 Pair<int, Noun>? getNearestGeneralNoun(Sentence sentence, int originIndex,

@@ -22,7 +22,7 @@ class Regexes {
   // https://regex101.com/r/oeeOrH/latest
   RegExp l01verb = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+V\s+\d\s+\d\s+)(?<tense>[a-zA-Z]+)(?:\s+)(?<voice>[a-zA-Z]+)(?:\s+)(?<mood>[a-zA-Z]+)(?:\s+)(?<person_num>\d)(?:\s+)(?<person_pl>S|P)$");
   // https://regex101.com/r/VnXEaF/latest
-  RegExp l02verb = RegExp(r"^(?:02 )(?<parts>(?:[a-zA-Z]+(?:,\s)?){3,4})(?:\s+V\s+\(\d[a-z]+\)\s+(?<intransitive>INTRANS)?\s+\[[A-Z]+\])");
+  RegExp l02verb = RegExp(r"^(?:02 )(?<parts>(?:[a-zA-Z]+(?:,\s)?){3,4})(?:\s+V\s+(?:\(\d[a-z]+\))?\s+(?<verb_type>X|TO_BE|TO_BEING|GEN|DAT|ABL|TRANS|INTRANS|IMPERS|DEP|SEMIDEP|PERFDEP)?\s+\[[A-Z]+\])");
 
   // https://regex101.com/r/any4DT/latest
   RegExp l01noun = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+N\s+\d\s+\d\s+)(?<case>[a-zA-Z]+)(?:\s+)(?<person_pl>S|P)(?:\s+)(?<gender>X|M|F|N|C)$");
@@ -32,5 +32,5 @@ class Regexes {
   // https://regex101.com/r/8Jc46N/latest
   RegExp l01adjective = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+ADJ\s+\d\s+\d\s+)(?<case>[a-zA-Z]+)(?:\s+)(?<person_pl>S|P)(?:\s+)(?<gender>X|M|F|N|C)(?:\s+)(?<comparison_type>X|POS|COMP|SUPER)$");
   // https://regex101.com/r/jLbBXW/latest
-  RegExp l02adjective = RegExp(r"^(?:02 )(?<parts>(?:[a-zA-Z\- ]+(?:,\s)?){4})(?:\s+ADJ\s+)(?:\s+\[[A-Z]+\])");
+  RegExp l02adjective = RegExp(r"^(?:02 )(?<parts>(?:[a-zA-Z\- ]*[a-zA-Z\-](?:,\s)){2,3}(?:[a-zA-Z\- ]*[a-zA-Z\-]))(?:\s+ADJ\s+\[[A-Z]+\])");
 }

@@ -20,6 +20,7 @@ import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/ffi/words_low_level.dart';
 import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
+import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives;
 import 'package:discipulus/utils/colors.dart';
 
 import 'lines.dart';
@@ -54,6 +55,10 @@ class Sentence {
 
   AccountingSentence makeAccounting() {
     return AccountingSentence(words: words.shallowCopy(), original: original);
+  }
+
+  Sentence shallowCopy() {
+    return Sentence(words: words.shallowCopy(), original: original);
   }
 }
 
@@ -134,8 +139,15 @@ class SentenceBundle {
   
   void printAllPossibilities() {
     print("${Style.RESET_ALL}all sentence possibilities:");
+    String? firstTranslation;
     for (Sentence s in allPossibleSentences()) {
-      print("\t${s.toColoredString()} ${Fore.YELLOW}->${Fore.RESET} ${superParse(s) ?? "${Fore.LIGHTMAGENTA_EX}NO TRANSLATION${Fore.RESET}"}");
+      s = s.shallowCopy();
+      applyAdjectives(s);
+      String? parsed = superParse(s);
+      firstTranslation ??= parsed;
+      print("\t${s.toColoredString()} ${Fore.YELLOW}->${Fore.RESET} ${parsed ?? "${Fore.LIGHTMAGENTA_EX}NO TRANSLATION${Fore.RESET}"}");
     }
+    print("first translation:");
+    print("\t${Style.BRIGHT}$original${Style.RESET_ALL} ${Fore.YELLOW}->${Fore.RESET} ${firstTranslation ?? "${Fore.LIGHTMAGENTA_EX}NO TRANSLATIONS${Fore.RESET}"}");
   }
 }
