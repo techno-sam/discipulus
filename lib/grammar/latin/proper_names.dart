@@ -44,14 +44,14 @@ const Map<Gender, List<String>> _endingSets = {
 
 
 class ProperName {
-  final Map<String, Noun> _stringForms;
-  final Map<Pair<Case, bool>, Noun> _forms;
-  final Map<Pair<Case, bool>, String> _reverseForms;
+  final Map<String, List<Noun>> _stringForms;
+  final Map<Case, Noun> _forms;
+  final Map<Case, String> _reverseForms;
 
   const ProperName._(
-      Map<String, Noun> stringForms,
-      Map<Pair<Case, bool>, Noun> forms,
-      Map<Pair<Case, bool>, String> reverseForms
+      Map<String, List<Noun>> stringForms,
+      Map<Case, Noun> forms,
+      Map<Case, String> reverseForms
       ): _stringForms = stringForms, _forms = forms, _reverseForms = reverseForms;
 
   factory ProperName(String baseName) {
@@ -70,37 +70,38 @@ class ProperName {
     if (gender == null || endings == null || baserName == null) {
       throw ArgumentError.value(baseName, "baseName", "Base name must end with one of ${_masc[0]} or ${_fem[0]}");
     }
-    final Map<String, Noun> stringForms = {};
-    final Map<Pair<Case, bool>, Noun> forms = {};
-    final Map<Pair<Case, bool>, String> reverseForms = {};
+    final Map<String, List<Noun>> stringForms = {};
+    final Map<Case, Noun> forms = {};
+    final Map<Case, String> reverseForms = {};
     for (int i = 0; i < 5; i++) {
       Case caze = Case.values[i];
-      for ((bool, int) plural in [(false, 0), (true, 1)]) {
-        final endingIdx = plural.$2 * 5 + i;
-        final name = baserName + endings[endingIdx];
-        final Noun noun = Noun.allTheParts(
-          caze: caze,
-          plural: plural.$1,
-          gender: gender,
-          parts: Couple(baserName+endings[0], baserName+endings[1]), translations: [[baseName]]
-        );
-        stringForms[name] = noun;
-        final key = Pair(caze, plural.$1);
-        forms[key] = noun;
-        reverseForms[key] = name;
-      }
+      final name = baserName + endings[i];
+      final Noun noun = Noun.allTheParts(
+        caze: caze,
+        plural: false,
+        gender: gender,
+        parts: Couple(baserName+endings[0], baserName+endings[1]), translations: [[baseName]],
+        isProper: true
+      );
+      stringForms.putIfAbsent(name.toLowerCase(), () => []).add(noun);
+      forms[caze] = noun;
+      reverseForms[caze] = name;
     }
     return ProperName._(stringForms, forms, reverseForms);
   }
 
   void prettyPrint() {
     /* pretty |---| box with unicode box symbols */
-    final int width = _stringForms.keys.map((s) => s.length).max;
-    print("┌${"─" * (width + 2)}┐");
-    for (final caze in Case.allCases) {
-      print("│ ${_reverseForms[caze]!.padRight(width)} │");
+    final int caseWidth = Case.values.map((c) => c.toString().length).max;
+    final int nameWidth = _stringForms.keys.map((s) => s.length).max;
+    print("┌${"─" * (caseWidth + 2)}┬${"─" * (nameWidth + 2)}┐");
+    for (final caze in Case.values) {
+      print("│ ${caze.toString().padRight(caseWidth)} │ ${_reverseForms[caze]!.padRight(nameWidth)} │");
+      if (caze != Case.abl) {
+        print("├${"─" * (caseWidth + 2)}┼${"─" * (nameWidth + 2)}┤");
+      }
     }
-    print("└${"─" * (width + 2)}┘");
+    print("└${"─" * (caseWidth + 2)}┴${"─" * (nameWidth + 2)}┘");
   }
 }
 
@@ -122,9 +123,10 @@ class ProperNameSet {
     properNames[name] = ProperName(name);
   }
 
-  Noun? parse(String word) {
-    return properNames.values.map((pn) => pn._stringForms[word]).firstOrNull;
+  List<Noun>? parse(String word) {
+    return properNames.values.map((pn) => pn._stringForms[word])
+        .where((n) => n != null && n.isNotEmpty).firstOrNull;
   }
 }
 
-final ProperNameSet properNames = ProperNameSet("Cornelius Cornelia Flavia".split(" "));
+final ProperNameSet properNames = ProperNameSet("Cornelius Cornelia Flavia Marcus".split(" "));

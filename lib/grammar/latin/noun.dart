@@ -73,7 +73,7 @@ enum Gender {
   }
 }
 
-class Noun extends PartOfSpeech {
+class Noun extends Word {
   static final Noun bob = Noun.allTheParts(
     caze: Case.nom,
     plural: false,

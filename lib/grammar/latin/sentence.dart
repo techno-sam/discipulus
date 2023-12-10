@@ -18,15 +18,18 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/ffi/words_low_level.dart';
+import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
 import 'package:discipulus/utils/colors.dart';
 
 import 'lines.dart';
+import 'noun.dart';
 
 class Sentence {
-  final List<PartOfSpeech> words;
+  final List<Word> words;
+  final String original;
 
-  const Sentence({required this.words});
+  const Sentence({required this.words, required this.original});
 
   @override
   String toString() {
@@ -45,16 +48,18 @@ class Sentence {
     return out;
   }
 
-  List<PartOfSpeech> get unusedWords => words;
+  /// do NOT call .enumerate on this, it will break the accounting system
+  List<Word> get unusedWords => words;
+  List<Pair<int, Word>> get enumeratedUnusedWords => words.enumerate.toList();
 
   AccountingSentence makeAccounting() {
-    return AccountingSentence(words: words.shallowCopy());
+    return AccountingSentence(words: words.shallowCopy(), original: original);
   }
 }
 
 class AccountingSentence extends Sentence {
   late final List<bool> _accountedFor;
-  AccountingSentence({required super.words}) {
+  AccountingSentence({required super.words, required super.original}) {
     _accountedFor = List.filled(words.length, false);
   }
 
@@ -77,18 +82,22 @@ class AccountingSentence extends Sentence {
   }
 
   @override
-  List<PartOfSpeech> get unusedWords => words.enumerate.where((e) => !isAccountedFor(e.first)).map((e) => e.second).toList();
+  List<Word> get unusedWords => words.enumerate.where((e) => !isAccountedFor(e.first)).map((e) => e.second).toList();
+  @override
+  List<Pair<int, Word>> get enumeratedUnusedWords => words.enumerate.where((e) => !isAccountedFor(e.first)).toList();
 }
 
 class SentenceBundle {
-  final List<List<PartOfSpeech>> words;
+  final List<List<Word>> words;
+  final String original;
 
-  const SentenceBundle({required this.words});
+  const SentenceBundle({required this.words, required this.original});
 
   factory SentenceBundle.fromSentence(String text, {required bool debugMode}) {
+    final originalText = text;
     WordsLL wordsLL = WordsLL(debugMode: debugMode);
     text = text.toLowerCase();
-    List<List<PartOfSpeech>> processedWords = [];
+    List<List<Word>> processedWords = [];
 
     if (text.contains(",") || text.contains(":") || text.contains(";")) {
       throw ArgumentError.value(text, "text", "Sentence cannot contain punctuation");
@@ -96,22 +105,31 @@ class SentenceBundle {
 
     List<String> words = text.split(" ").where((s) => s.isNotEmpty).toList();
     for (String word in words) {
+      final List<Noun>? properName = properNames.parse(word);
+      if (properName != null && properName.isNotEmpty) {
+        processedWords.add(properName);
+        continue;
+      }
       final String linesText = wordsLL.wordsDefault(word);
       final List<Line> lines = parseToLines(linesText);
-      final List<PartOfSpeech> partsOfSpeech = parseToPOS(lines);
+      final List<Word> partsOfSpeech = parseToPOS(lines);
+      if (partsOfSpeech.isEmpty) {
+        final String indentedOutput = linesText.split("\n").map((s) => "> $s").join("\n");
+        throw "Word could not be translated: \"$word\"\n$indentedOutput";
+      }
       processedWords.add(partsOfSpeech);
     }
 
-    return SentenceBundle(words: processedWords);
+    return SentenceBundle(words: processedWords, original: originalText);
   }
 
   List<Sentence> allPossibleSentences() {
-    List<List<PartOfSpeech>> parts = [];
-    for (List<PartOfSpeech> word in words) {
+    List<List<Word>> parts = [];
+    for (List<Word> word in words) {
       parts.extendVariants(word);
     }
 
-    return parts.map((p) => Sentence(words: p)).toList();
+    return parts.map((p) => Sentence(words: p, original: original)).toList();
   }
   
   void printAllPossibilities() {

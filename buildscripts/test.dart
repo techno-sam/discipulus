@@ -83,11 +83,22 @@ void main() {
     "puella ambulat",
     "ambulo",
     "puer vocat",
-    "regimus"
+    "regimus",
+    "Cornelia ambulat",
+    "Marcus audit fragorem", // originally Marcus audit magnum fragorem
+    "Marcus audit magnum fragorem"
   ];
   for (final String testSentence in testSentences) {
     print("\n\nAll possibilities for ${Style.BRIGHT}$testSentence${Style.RESET_ALL}${Fore.LIGHTBLACK_EX}${Style.DIM}");
-    final bundle = SentenceBundle.fromSentence(testSentence, debugMode: true);
+    final SentenceBundle bundle;
+    try {
+      bundle = SentenceBundle.fromSentence(testSentence, debugMode: true);
+    } catch (e, s) {
+      print(Style.RESET_ALL+Fore.RED);
+      print(e);
+      print(s);
+      continue;
+    }
     bundle.printAllPossibilities();
   }
 }

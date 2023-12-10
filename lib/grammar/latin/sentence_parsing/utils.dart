@@ -21,14 +21,24 @@ import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
 
+Pair<Pair<int, A>, Pair<int, B>>? _getNearestPair<A, B>(Sentence sentence,
+    bool Function(A, B) predicate, int targetIndex) {
+  final Iterable<Pair<Pair<int, A>, Pair<int, B>>> options = sentence.enumeratedUnusedWords.toList().pairs
+      .whereFirst$SecondType<A>()
+      .whereSecond$SecondType<B>()
+      .where((e) => predicate(e.first.second, e.second.second));
+  if (options.isEmpty) return null;
+  return options.minWith((p) => ((targetIndex*2) - (p.first.first + p.second.first)).abs());
+}
+
 Pair<int, Verb>? getVerb(Sentence sentence) {
-  return sentence.unusedWords.enumerate.whereSecondType<Verb>().firstOrNull;
+  return sentence.enumeratedUnusedWords.whereSecondType<Verb>().firstOrNull;
 }
 
 Pair<int, Noun>? getNearestSubjectNoun(Sentence sentence, Person verbPerson, int verbIndex) {
   if (verbPerson.person != 3) return null;
   // Bob walks; Bob and Joe walk
-  final nouns = sentence.unusedWords.enumerate
+  final nouns = sentence.enumeratedUnusedWords
       .whereSecondType<Noun>()
       .where((p) => p.second.plural == verbPerson.plural && p.second.caze == Case.nom);
   if (nouns.isEmpty) return null;
@@ -38,7 +48,7 @@ Pair<int, Noun>? getNearestSubjectNoun(Sentence sentence, Person verbPerson, int
 Pair<int, Noun>? getNearestGeneralNoun(Sentence sentence, int originIndex,
     {required Case caze, Person? targetPerson}) {
   // Bob walks; Bob and Joe walk
-  final nouns = sentence.unusedWords.enumerate
+  final nouns = sentence.enumeratedUnusedWords
       .whereSecondType<Noun>()
       .where((p) => (targetPerson == null || p.second.plural == targetPerson.plural) && p.second.caze == caze);
   if (nouns.isEmpty) return null;

@@ -45,6 +45,10 @@ class Pair<A, B> {
     }
     return false;
   }
+  
+  Pair<A, B> shallowCopy() {
+    return Pair(first, second);
+  }
 }
 
 class Couple<T> extends Pair<T, T> {
@@ -65,6 +69,11 @@ class Couple<T> extends Pair<T, T> {
 
   bool either(bool Function(T) test) {
     return test.call(first) || test.call(second);
+  }
+
+  @override
+  Couple<T> shallowCopy() {
+    return Couple(first, second);
   }
 }
 
@@ -163,6 +172,38 @@ extension WherePairIterable<A, B> on Iterable<Pair<A, B>> {
   }
 }
 
+extension MultiCastNestedPair<A, B, C, D> on Pair<Pair<A, B>, Pair<C, D>> {
+  Pair<Pair<TA, TB>, Pair<C, D>> castFirst<TA, TB>() {
+    return Pair(first.cast<TA, TB>(), second.shallowCopy());
+  }
+
+  Pair<Pair<A, B>, Pair<TC, TD>> castSecond<TC, TD>() {
+    return Pair(first.shallowCopy(), second.cast<TC, TD>());
+  }
+
+  Pair<Pair<TA, TB>, Pair<TC, TD>> castBoth<TA, TB, TC, TD>() {
+    return Pair(first.cast<TA, TB>(), second.cast<TC, TD>());
+  }
+}
+
+extension WherePairPairIterable<A, B, C, D> on Iterable<Pair<Pair<A, B>, Pair<C, D>>> {
+  Iterable<Pair<Pair<T, B>, Pair<C, D>>> whereFirst$FirstType<T>() {
+    return where((p) => p.first.first is T).map((p) => p.castFirst<T, B>());
+  }
+
+  Iterable<Pair<Pair<A, T>, Pair<C, D>>> whereFirst$SecondType<T>() {
+    return where((p) => p.first.second is T).map((p) => p.castFirst<A, T>());
+  }
+
+  Iterable<Pair<Pair<A, B>, Pair<T, D>>> whereSecond$FirstType<T>() {
+    return where((p) => p.second.first is T).map((p) => p.castSecond<T, D>());
+  }
+
+  Iterable<Pair<Pair<A, B>, Pair<C, T>>> whereSecond$SecondType<T>() {
+    return where((p) => p.second.second is T).map((p) => p.castSecond<C, T>());
+  }
+}
+
 extension Enumeratable<E> on Iterable<E> {
   Iterable<Pair<int, E>> get enumerate sync* {
     int i = 0;
@@ -199,4 +240,18 @@ extension ColorfulList on List<bool> {
     out += "]";
     return out;
   }
+}
+
+extension CouplewiseList<E> on List<E> {
+  List<Couple<E>> get couples => [
+    for (int i = 0; i < length - 1; i++)
+      Couple(this[i], this[i+1]),
+  ];
+}
+
+extension PairwiseList<E> on List<E> {
+  List<Pair<E, E>> get pairs => [
+    for (int i = 0; i < length - 1; i++)
+      Pair(this[i], this[i+1]),
+  ];
 }

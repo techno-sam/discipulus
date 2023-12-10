@@ -98,7 +98,7 @@ enum Mood {
   }
 }
 
-class Verb extends PartOfSpeech {
+class Verb extends Word {
   late final Tense _tense; // meaningless for infinitives
   late final Person _person; // meaningless for infinitives
   late final Mood _mood;

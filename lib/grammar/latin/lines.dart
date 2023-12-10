@@ -39,7 +39,7 @@ enum PartsOfSpeech {
   noun
 }
 
-abstract class PartOfSpeech {
+abstract class Word {
   PartsOfSpeech get pos;
 
   String toColoredString();
@@ -60,8 +60,8 @@ enum _Mode {
   collectingVerb
 }
 
-List<PartOfSpeech> parseToPOS(List<Line> lines) {
-  List<PartOfSpeech> out = [];
+List<Word> parseToPOS(List<Line> lines) {
+  List<Word> out = [];
   List<L01Noun> nounBits = [];
   List<L01Verb> verbBits = [];
 

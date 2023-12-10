@@ -18,6 +18,7 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart' as english;
+import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
@@ -45,6 +46,16 @@ String? verbWithNominative(Sentence sentence) {
   return english.translateVerb(verb.second, noun.second);
 }
 
+enum SentencePiece {
+  subject_verb(0), // ignore: constant_identifier_names
+  object(1),
+  indirectObject(2),
+  ;
+  final int ordering;
+
+  const SentencePiece(this.ordering);
+}
+
 /*
 Sentence order:
 
@@ -64,23 +75,33 @@ String? accountingBased(Sentence sentence) {
     accounting.accountFor(subjectNoun.first);
   }
 
-  String translatedSentence = english.translateVerb(verb.second, subjectNoun?.second);
+  final List<(SentencePiece, String)> pieces = [];
+  pieces.add((SentencePiece.subject_verb, english.translateVerb(verb.second, subjectNoun?.second)));
 
   final ablativeNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.abl);
   if (ablativeNoun != null) {
     accounting.accountFor(ablativeNoun.first);
-    translatedSentence += " by/from/with ${ablativeNoun.second.properConsideringPrimaryTranslation}";
+    pieces.add((SentencePiece.indirectObject, "by/from/with ${ablativeNoun.second.properConsideringPrimaryTranslation}"));
   }
 
+  final accusativeNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.acc);
+  if (accusativeNoun != null) {
+    accounting.accountFor(accusativeNoun.first);
+    pieces.add((SentencePiece.object, accusativeNoun.second.properConsideringPrimaryTranslation));
+  }
+
+  pieces.sort(((a, b) => a.$1.ordering.compareTo(b.$1.ordering)));
+  final translatedSentence = pieces.map((e) => e.$2).join(" ").replaceAll("  ", " "); // deduplicate spaces
+
   if (accounting.isNotFullyAccountedFor) {
-    print("${Fore.LIGHTBLACK_EX}${Style.DIM}> accounting: ${accounting.accountingSummary}${Fore.LIGHTBLACK_EX} would be: `$translatedSentence`${Style.RESET_ALL}");
+    print("${Fore.LIGHTBLACK_EX}${Style.DIM}>> accounting: ${accounting.accountingSummary}${Fore.LIGHTBLACK_EX} would be: `$translatedSentence`${Style.RESET_ALL}");
     return null;
   }
   return translatedSentence;
 }
 
 String? superParse(Sentence sentence) {
-  for (final parser in [accountingBased, standaloneVerb, verbWithNominative]) {
+  for (final parser in [accountingBased/*, standaloneVerb, verbWithNominative*/]) {
     print("${Fore.LIGHTBLACK_EX}${Style.DIM}> trying parser: ${parser.name}${Style.RESET_ALL}");
     final result = parser.call(sentence);
     if (result != null) return result;
