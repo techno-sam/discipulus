@@ -39,7 +39,8 @@ import 'adjective.dart';
 enum PartsOfSpeech {
   verb,
   noun,
-  adjective
+  adjective,
+  conjunction
 }
 
 abstract class Word {

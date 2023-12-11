@@ -20,6 +20,39 @@ import 'dart:math' as math;
 
 import 'package:discipulus/utils/colors.dart';
 
+class Triple<A, B, C> {
+  final A first;
+  final B second;
+  final C third;
+
+  const Triple(this.first, this.second, this.third);
+
+  @override
+  String toString() {
+    return 'Triple<$A, $B, $C>[$first, $second, $third]';
+  }
+
+  Triple<T, T2, T3> cast<T, T2, T3>() {
+    return Triple(first as T, second as T2, third as T3);
+  }
+
+  @override
+  int get hashCode => Object.hash(first, second, third);
+
+  @override
+  bool operator ==(Object other) {
+    if (super == other) return true;
+    if (other is Triple<A, B, C>) {
+      return first == other.first && second == other.second && third == other.third;
+    }
+    return false;
+  }
+
+  Triple<A, B, C> shallowCopy() {
+    return Triple(first, second, third);
+  }
+}
+
 class Pair<A, B> {
   final A first;
   final B second;
@@ -207,6 +240,80 @@ extension WherePairPairIterable<A, B, C, D> on Iterable<Pair<Pair<A, B>, Pair<C,
   }
 }
 
+extension MultiCastNestedTriple<A1, A2, B1, B2, C1, C2> on Triple<Pair<A1, A2>, Pair<B1, B2>, Pair<C1, C2>> {
+  Triple<Pair<TA1, TA2>, Pair<B1, B2>, Pair<C1, C2>> castFirst<TA1, TA2>() {
+    return Triple(first.cast<TA1, TA2>(), second.shallowCopy(), third.shallowCopy());
+  }
+
+  Triple<Pair<A1, A2>, Pair<TB1, TB2>, Pair<C1, C2>> castSecond<TB1, TB2>() {
+    return Triple(first.shallowCopy(), second.cast<TB1, TB2>(), third.shallowCopy());
+  }
+
+  Triple<Pair<A1, A2>, Pair<B1, B2>, Pair<TC1, TC2>> castThird<TC1, TC2>() {
+    return Triple(first.shallowCopy(), second.shallowCopy(), third.cast<TC1, TC2>());
+  }
+
+  Triple<Pair<TA1, TA2>, Pair<TB1, TB2>, Pair<C1, C2>> castFirstSecond<TA1, TA2, TB1, TB2>() {
+    return Triple(first.cast<TA1, TA2>(), second.cast<TB1, TB2>(), third.shallowCopy());
+  }
+
+  Triple<Pair<TA1, TA2>, Pair<B1, B2>, Pair<TC1, TC2>> castFirstThird<TA1, TA2, TC1, TC2>() {
+    return Triple(first.cast<TA1, TA2>(), second.shallowCopy(), third.cast<TC1, TC2>());
+  }
+
+  Triple<Pair<A1, A2>, Pair<TB1, TB2>, Pair<TC1, TC2>> castSecondThird<TB1, TB2, TC1, TC2>() {
+    return Triple(first.shallowCopy(), second.cast<TB1, TB2>(), third.cast<TC1, TC2>());
+  }
+
+  Triple<Pair<TA1, TA2>, Pair<TB1, TB2>, Pair<TC1, TC2>> castAll<TA1, TA2, TB1, TB2, TC1, TC2>() {
+    return Triple(first.cast<TA1, TA2>(), second.cast<TB1, TB2>(), third.cast<TC1, TC2>());
+  }
+}
+
+extension WhereTripleIterable<A, B, C> on Iterable<Triple<A, B, C>> {
+  Iterable<Triple<T, B, C>> whereFirstType<T>() {
+    return where((p) => p.first is T).map((p) => p.cast<T, B, C>());
+  }
+
+  Iterable<Triple<A, T, C>> whereSecondType<T>() {
+    return where((p) => p.second is T).map((p) => p.cast<A, T, C>());
+  }
+
+  Iterable<Triple<A, B, T>> whereThirdType<T>() {
+    return where((p) => p.third is T).map((p) => p.cast<A, B, T>());
+  }
+
+  Iterable<Triple<T, T2, T3>> whereAllTypes<T, T2, T3>() {
+    return where((p) => p.first is T && p.second is T2 && p.third is T3).map((p) => p.cast<T, T2, T3>());
+  }
+}
+
+extension WhereTriplePairIterable<A1, A2, B1, B2, C1, C2> on Iterable<Triple<Pair<A1, A2>, Pair<B1, B2>, Pair<C1, C2>>> {
+  Iterable<Triple<Pair<T1, A2>, Pair<B1, B2>, Pair<C1, C2>>> whereFirst$FirstType<T1>() {
+    return where((p) => p.first.first is T1).map((p) => p.castFirst<T1, A2>());
+  }
+
+  Iterable<Triple<Pair<A1, T2>, Pair<B1, B2>, Pair<C1, C2>>> whereFirst$SecondType<T2>() {
+    return where((p) => p.first.second is T2).map((p) => p.castFirst<A1, T2>());
+  }
+
+  Iterable<Triple<Pair<A1, A2>, Pair<T1, B2>, Pair<C1, C2>>> whereSecond$FirstType<T1>() {
+    return where((p) => p.second.first is T1).map((p) => p.castSecond<T1, B2>());
+  }
+
+  Iterable<Triple<Pair<A1, A2>, Pair<B1, T2>, Pair<C1, C2>>> whereSecond$SecondType<T2>() {
+    return where((p) => p.second.second is T2).map((p) => p.castSecond<B1, T2>());
+  }
+
+  Iterable<Triple<Pair<A1, A2>, Pair<B1, B2>, Pair<T1, C2>>> whereThird$FirstType<T1>() {
+    return where((p) => p.third.first is T1).map((p) => p.castThird<T1, C2>());
+  }
+
+  Iterable<Triple<Pair<A1, A2>, Pair<B1, B2>, Pair<C1, T2>>> whereThird$SecondType<T2>() {
+    return where((p) => p.third.second is T2).map((p) => p.castThird<C1, T2>());
+  }
+}
+
 extension Enumeratable<E> on Iterable<E> {
   Iterable<Pair<int, E>> get enumerate sync* {
     int i = 0;
@@ -256,6 +363,13 @@ extension PairwiseList<E> on List<E> {
   List<Pair<E, E>> get pairs => [
     for (int i = 0; i < length - 1; i++)
       Pair(this[i], this[i+1]),
+  ];
+}
+
+extension TriplewiseList<E> on List<E> {
+  List<Triple<E, E, E>> get triples => [
+    for (int i = 0; i < length - 2; i++)
+      Triple(this[i], this[i+1], this[i+2]),
   ];
 }
 

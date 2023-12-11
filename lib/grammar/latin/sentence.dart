@@ -18,9 +18,10 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/ffi/words_low_level.dart';
+import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
-import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives;
+import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyConjunctions;
 import 'package:discipulus/utils/colors.dart';
 
 import 'lines.dart';
@@ -115,6 +116,13 @@ class SentenceBundle {
         processedWords.add(properName);
         continue;
       }
+
+      final Conjunction? conjunction = Conjunction.parse(word);
+      if (conjunction != null) {
+        processedWords.add([conjunction]);
+        continue;
+      }
+
       final String linesText = wordsLL.wordsDefault(word);
       final List<Line> lines = parseToLines(linesText);
       final List<Word> partsOfSpeech = parseToPOS(lines);
@@ -140,14 +148,25 @@ class SentenceBundle {
   void printAllPossibilities() {
     print("${Style.RESET_ALL}all sentence possibilities:");
     String? firstTranslation;
+    final List<String> allTranslations = [];
     for (Sentence s in allPossibleSentences()) {
       s = s.shallowCopy();
       applyAdjectives(s);
+      applyConjunctions(s);
       String? parsed = superParse(s);
       firstTranslation ??= parsed;
+      if (parsed != null) {
+        allTranslations.add(parsed);
+      }
       print("\t${s.toColoredString()} ${Fore.YELLOW}->${Fore.RESET} ${parsed ?? "${Fore.LIGHTMAGENTA_EX}NO TRANSLATION${Fore.RESET}"}");
     }
     print("first translation:");
     print("\t${Style.BRIGHT}$original${Style.RESET_ALL} ${Fore.YELLOW}->${Fore.RESET} ${firstTranslation ?? "${Fore.LIGHTMAGENTA_EX}NO TRANSLATIONS${Fore.RESET}"}");
+    if (allTranslations.length > 1) {
+      print("other translations:");
+      for (String translation in allTranslations.skip(1)) {
+        print("\t${Style.BRIGHT}$original${Style.RESET_ALL} ${Fore.YELLOW}->${Fore.RESET} ${translation}");
+      }
+    }
   }
 }

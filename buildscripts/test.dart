@@ -95,7 +95,11 @@ void main() {
     "Cornelia ambulat Marcum", // 'ambulat' is intransitive, so this should fail to translate
     "Flavia vocat puellam Romanam",
     "Flavia est puella Romana",
-    "Cornelia et Flavia vocant"
+    "Cornelia et Flavia vocant",
+    "Cornelia et Flavia sunt puellae Romanae",
+    "Marcus et puellae ambulant",
+    "Cornelia et Flavia sunt amicae",
+    "Cornelia sub arbore sedet"
   ];
   for (final String testSentence in testSentences) {
     print("\n\nAll possibilities for ${Style.BRIGHT}$testSentence${Style.RESET_ALL}${Fore.LIGHTBLACK_EX}${Style.DIM}");

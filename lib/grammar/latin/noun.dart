@@ -113,14 +113,16 @@ class Noun extends Word {
   List<List<String>> get translations => _translations;
   bool get isProper => _isProper;
 
-  String get primaryTranslation => _translations[0][0];
+  String get primaryTranslation => _translations[0][0] + (plural ? "s" : "");
   String get properConsideringPrimaryTranslation => isProper ? primaryTranslation.capitalize : "the $primaryTranslation";
 
   String verbProperConsideringPrimaryTranslation(Verb verb) {
     if (isProper) {
       return primaryTranslation.capitalize;
-    } else {
+    } else if (!(verb.isToBe && caze == Case.nom && plural)) {
       return "${verb.isToBe ? "a" : "the"} $primaryTranslation";
+    } else {
+      return primaryTranslation;
     }
   }
 

@@ -18,9 +18,20 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/adjective.dart';
+import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
+
+Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>? _getNearestTriple<A, B, C>(Sentence sentence, bool Function(A, B, C) predicate, int targetIndex) {
+  final Iterable<Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>> options = sentence.enumeratedUnusedWords.triples
+      .whereFirst$SecondType<A>()
+      .whereSecond$SecondType<B>()
+      .whereThird$SecondType<C>()
+      .where((e) => predicate(e.first.second, e.second.second, e.third.second));
+  if (options.isEmpty) return null;
+  return options.minWith((p) => ((targetIndex*3) - (p.first.first + p.second.first + p.third.first)).abs());
+}
 
 Pair<Pair<int, A>, Pair<int, B>>? _getNearestPair<A, B>(Sentence sentence,
     bool Function(A, B) predicate, int targetIndex) {
@@ -55,6 +66,24 @@ void applyAdjectives(Sentence original) {
     original.words[nearestPair2.first.first] = modified;
     original.words.removeAt(nearestPair2.second.first);
     nearestPair2 = _getNearestPair<Noun, Adjective>(original, (a, b) => a.canModify(b), 0);
+  }
+}
+
+void applyConjunctions(Sentence s) {
+if (s is AccountingSentence) {
+    throw "Cannot apply conjunctions to an accounting sentence";
+  }
+  // handle conjunctions
+  var nearestTriple = _getNearestTriple<Noun, Conjunction, Noun>(s, (a, b, c) => b.canMerge(a, c), 0);
+  while (nearestTriple != null) {
+    final conjunction = nearestTriple.second.second;
+    final nounA = nearestTriple.first.second;
+    final nounB = nearestTriple.third.second;
+    final merged = conjunction.merge(nounA, nounB)!;
+    s.words[nearestTriple.first.first] = merged;
+    s.words.removeAt(nearestTriple.third.first);
+    s.words.removeAt(nearestTriple.second.first);
+    nearestTriple = _getNearestTriple<Noun, Conjunction, Noun>(s, (a, b, c) => b.canMerge(a, c), 0);
   }
 }
 
