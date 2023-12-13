@@ -29,6 +29,7 @@ Types of lines:
 There can be multiple 01-type lines leading up to each 02-03 pair
  */
 
+import 'package:discipulus/grammar/latin/preposition.dart';
 import 'package:discipulus/grammar/latin/verb.dart' show Mood, Person, Tense, Verb, VerbKind;
 import 'package:discipulus/grammar/latin/noun.dart' show Case, Gender, Noun;
 import 'package:discipulus/grammar/latin/regex.dart' show re;
@@ -40,7 +41,8 @@ enum PartsOfSpeech {
   verb,
   noun,
   adjective,
-  conjunction
+  conjunction,
+  preposition
 }
 
 abstract class Word {
@@ -62,10 +64,13 @@ enum _Mode {
   none,
   collectingNoun,
   collectingVerb,
-  collectingAdjective
+  collectingAdjective,
+  collectingPreposition
 }
 
-List<Word> parseToPOS(List<Line> lines) {
+const _printBackup = print;
+
+List<Word> parseToPOS(List<Line> lines, {void Function(String) print = _printBackup}) {
   List<Word> out = [];
   List<dynamic> bits = [];
 
@@ -84,6 +89,9 @@ List<Word> parseToPOS(List<Line> lines) {
         } else if (line is L01Adjective) {
           bits = [line];
           mode = _Mode.collectingAdjective;
+        } else if (line is L01Preposition) {
+          bits = [line];
+          mode = _Mode.collectingPreposition;
         } else {
           print("Unexpected line $line during mode $mode");
         }
@@ -149,6 +157,25 @@ List<Word> parseToPOS(List<Line> lines) {
           print("Failed to handle line: $line");
         }
         break;
+      case _Mode.collectingPreposition:
+        if (line is L01Preposition) {
+          bits.add(line);
+        } else if (line is L02Preposition && iter.canPeek()) {
+          final Line next = iter.peeked;
+          if (next is L03Common) {
+            iter.moveNext();
+            for (final L01Preposition bit in bits) {
+              out.add(Preposition.lines(line01: bit, line02: line, line03: next));
+            }
+          } else {
+            print("Incorrect next line $line");
+          }
+          mode = _Mode.none;
+          bits = [];
+        } else {
+          print("Failed to handle line: $line");
+        }
+        break;
     }
   }
   return out;
@@ -167,6 +194,8 @@ class Line {
       L02Noun.parse,
       L01Adjective.parse,
       L02Adjective.parse,
+      L01Preposition.parse,
+      L02Preposition.parse,
       L03Common.parse,
     ];
     for (Line? Function(String) parser in parsers) {
@@ -344,6 +373,56 @@ class L02Adjective extends Line {
 
     List<String> parts = parts_.split(", ");
     return L02Adjective(original: text, parts: parts);
+  }
+}
+
+/***************/
+/* Preposition */
+/***************/
+
+class L01Preposition extends L01 {
+  late final Case _caze;
+
+  Case get caze => _caze;
+  String get word => split;
+
+  L01Preposition({required super.original, required super.split, required Case caze}): _caze = caze;
+  
+  static L01Preposition? parse(String text) {
+    RegExpMatch? match = re.l01preposition.firstMatch(text);
+    if (match == null) return null;
+
+    String split_ = match.namedGroup("word")!;
+    String case_ = match.namedGroup("case")!.toLowerCase();
+
+    Case? caze = Case.decode(case_);
+    if (caze == null) {
+      print("[L01Preposition] Case not found for $text");
+      return null;
+    }
+    return L01Preposition(original: text, split: split_, caze: caze);
+  }
+}
+
+class L02Preposition extends Line {
+  late final Case _caze;
+
+  Case get caze => _caze;
+
+  L02Preposition({required super.original, required Case caze}): _caze = caze;
+
+  static L02Preposition? parse(String text) {
+    RegExpMatch? match = re.l02preposition.firstMatch(text);
+    if (match == null) return null;
+
+    String case_ = match.namedGroup("case")!.toLowerCase();
+
+    Case? caze = Case.decode(case_);
+    if (caze == null) {
+      print("[L02Preposition] Case not found for $text");
+      return null;
+    }
+    return L02Preposition(original: text, caze: caze);
   }
 }
 

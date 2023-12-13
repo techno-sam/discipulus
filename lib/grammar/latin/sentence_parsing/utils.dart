@@ -20,6 +20,7 @@ import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/adjective.dart';
 import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
+import 'package:discipulus/grammar/latin/preposition.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
 
@@ -69,8 +70,24 @@ void applyAdjectives(Sentence original) {
   }
 }
 
+void applyPrepositions(Sentence s) {
+  if (s is AccountingSentence) {
+    throw "Cannot apply prepositions to an accounting sentence";
+  }
+  // handle preposition-noun pairs
+  var nearestPair = _getNearestPair<Preposition, Noun>(s, (a, b) => a.canPrepose(b), 0);
+  while (nearestPair != null) {
+    final preposition = nearestPair.first.second;
+    final noun = nearestPair.second.second;
+    final preposed = preposition.prepose(noun)!;
+    s.words[nearestPair.first.first] = preposed;
+    s.words.removeAt(nearestPair.second.first);
+    nearestPair = _getNearestPair<Preposition, Noun>(s, (a, b) => a.canPrepose(b), 0);
+  }
+}
+
 void applyConjunctions(Sentence s) {
-if (s is AccountingSentence) {
+  if (s is AccountingSentence) {
     throw "Cannot apply conjunctions to an accounting sentence";
   }
   // handle conjunctions
@@ -101,12 +118,15 @@ Pair<int, Noun>? getNearestSubjectNoun(Sentence sentence, Person verbPerson, int
   return nouns.minWith((p) => (verbIndex - p.first).weightedAbs());
 }
 
+bool _true(dynamic _) => true;
+
 Pair<int, Noun>? getNearestGeneralNoun(Sentence sentence, int originIndex,
-    {required Case caze, Person? targetPerson}) {
+    {required Case caze, Person? targetPerson, bool Function(Noun noun) predicate = _true}) {
   // Bob walks; Bob and Joe walk
   final nouns = sentence.enumeratedUnusedWords
       .whereSecondType<Noun>()
-      .where((p) => (targetPerson == null || p.second.plural == targetPerson.plural) && p.second.caze == caze);
+      .where((p) => (targetPerson == null || p.second.plural == targetPerson.plural) && p.second.caze == caze)
+      .where((p) => predicate(p.second));
   if (nouns.isEmpty) return null;
   return nouns.minWith((p) => (originIndex - p.first).abs());
 }

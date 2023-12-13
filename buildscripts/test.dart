@@ -16,6 +16,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart';
 import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
@@ -99,19 +100,24 @@ void main() {
     "Cornelia et Flavia sunt puellae Romanae",
     "Marcus et puellae ambulant",
     "Cornelia et Flavia sunt amicae",
-    "Cornelia sub arbore sedet"
+    "Cornelia sub arbore sedet cum Flavia",
+    "Cornelia et raedae sunt in pictura",
+    "in pictura est villa rustica cum raeda",
+    "ambulo ad hortum cum Cornelia",
   ];
-  for (final String testSentence in testSentences) {
+  for (Pair<int, String> pair in testSentences.enumerate) {
+    final String testSentence = pair.second;
     print("\n\nAll possibilities for ${Style.BRIGHT}$testSentence${Style.RESET_ALL}${Fore.LIGHTBLACK_EX}${Style.DIM}");
     final SentenceBundle bundle;
+    final bool skipUntranslatable = pair.first < testSentences.length - 1;
     try {
-      bundle = SentenceBundle.fromSentence(testSentence, debugMode: true);
+      bundle = SentenceBundle.fromSentence(testSentence, debugMode: true, print: skipUntranslatable ? (s) {} : print);
     } catch (e, s) {
       print(Style.RESET_ALL+Fore.RED);
       print(e);
       print(s);
       continue;
     }
-    bundle.printAllPossibilities();
+    bundle.printAllPossibilities(skipUntranslatable: skipUntranslatable);
   }
 }

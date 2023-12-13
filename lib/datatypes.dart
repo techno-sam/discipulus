@@ -376,3 +376,23 @@ extension TriplewiseList<E> on List<E> {
 extension WeightedAbs on int {
   int weightedAbs() => this < 0 ? 1-this : this;
 }
+
+extension StableSort<E> on List<E> {
+  void stableSort(int Function(E a, E b) cmp) {
+    List<List<dynamic>> tmp = [];
+    for (var i = 0; i < length; i++) {
+      tmp.add([this[i], i]);
+    }
+    tmp.sort((a, b) {
+      var result = cmp(a[0], b[0]);
+      if (result != 0) {
+        return result;
+      } else {
+        return a[1] - b[1];
+      }
+    });
+    for (var i = 0; i < length; i++) {
+      this[i] = tmp[i][0];
+    }
+  }
+}

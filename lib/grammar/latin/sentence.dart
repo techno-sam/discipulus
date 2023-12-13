@@ -21,8 +21,9 @@ import 'package:discipulus/ffi/words_low_level.dart';
 import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
-import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyConjunctions;
+import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyConjunctions, applyPrepositions;
 import 'package:discipulus/utils/colors.dart';
+import 'package:discipulus/utils/print_buffer.dart';
 
 import 'lines.dart';
 import 'noun.dart';
@@ -93,13 +94,15 @@ class AccountingSentence extends Sentence {
   List<Pair<int, Word>> get enumeratedUnusedWords => words.enumerate.where((e) => !isAccountedFor(e.first)).toList();
 }
 
+const _printBackup = print;
+
 class SentenceBundle {
   final List<List<Word>> words;
   final String original;
 
   const SentenceBundle({required this.words, required this.original});
 
-  factory SentenceBundle.fromSentence(String text, {required bool debugMode}) {
+  factory SentenceBundle.fromSentence(String text, {required bool debugMode, void Function(String) print = _printBackup}) {
     final originalText = text;
     WordsLL wordsLL = WordsLL(debugMode: debugMode);
     text = text.toLowerCase();
@@ -125,7 +128,7 @@ class SentenceBundle {
 
       final String linesText = wordsLL.wordsDefault(word);
       final List<Line> lines = parseToLines(linesText);
-      final List<Word> partsOfSpeech = parseToPOS(lines);
+      final List<Word> partsOfSpeech = parseToPOS(lines, print: print);
       if (partsOfSpeech.isEmpty) {
         final String indentedOutput = linesText.split("\n").map((s) => "> $s").join("\n");
         throw "Word could not be translated: \"$word\"\n$indentedOutput";
@@ -145,19 +148,25 @@ class SentenceBundle {
     return parts.map((p) => Sentence(words: p, original: original)).toList();
   }
   
-  void printAllPossibilities() {
+  void printAllPossibilities({bool skipUntranslatable = false}) {
+    final PrintBuffer printBuffer = PrintBuffer();
     print("${Style.RESET_ALL}all sentence possibilities:");
     String? firstTranslation;
     final List<String> allTranslations = [];
     for (Sentence s in allPossibleSentences()) {
+      printBuffer.clear();
       s = s.shallowCopy();
       applyAdjectives(s);
+      applyPrepositions(s);
       applyConjunctions(s);
-      String? parsed = superParse(s);
+      String? parsed = superParse(s, print: printBuffer.printSham);
       firstTranslation ??= parsed;
       if (parsed != null) {
         allTranslations.add(parsed);
+      } else if (skipUntranslatable) {
+        continue;
       }
+      printBuffer.print();
       print("\t${s.toColoredString()} ${Fore.YELLOW}->${Fore.RESET} ${parsed ?? "${Fore.LIGHTMAGENTA_EX}NO TRANSLATION${Fore.RESET}"}");
     }
     print("first translation:");

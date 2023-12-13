@@ -20,6 +20,7 @@ import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart' as english;
 import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
+import 'package:discipulus/grammar/latin/preposition.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
 import 'package:discipulus/utils/colors.dart';
@@ -28,7 +29,7 @@ import 'utils.dart';
 
 typedef SentenceParser = String? Function(Sentence);
 
-String? standaloneVerb(Sentence sentence) {
+String? standaloneVerb(Sentence sentence, {void Function(String message) print = _printBackup}) {
   if (sentence.words.length == 1) {
     final word = sentence.words[0];
     if (word is Verb && word.mood == Mood.ind) {
@@ -38,7 +39,7 @@ String? standaloneVerb(Sentence sentence) {
   return null;
 }
 
-String? verbWithNominative(Sentence sentence) {
+String? verbWithNominative(Sentence sentence, {void Function(String message) print = _printBackup}) {
   final verb = getVerb(sentence);
   if (verb == null) return null;
   final noun = getNearestSubjectNoun(sentence, verb.second.person, verb.first);
@@ -63,7 +64,7 @@ Sentence order:
 [{accusative noun | preposition-accusative pair}]
 [by/from/with {ablative noun | preposition-ablative pair}]
  */
-String? accountingBased(Sentence sentence) {
+String? accountingBased(Sentence sentence, {void Function(String message) print = _printBackup}) {
   final AccountingSentence accounting = sentence.makeAccounting();
 
   final verb = getVerb(accounting);
@@ -75,24 +76,54 @@ String? accountingBased(Sentence sentence) {
     accounting.accountFor(subjectNoun.first);
   }
 
-  final List<(SentencePiece, String)> pieces = [];
-  pieces.add((SentencePiece.subject_verb, english.translateVerb(verb.second, subjectNoun?.second)));
+  final List<(SentencePiece, String, int)> pieces = [];
+  pieces.add((SentencePiece.subject_verb, english.translateVerb(verb.second, subjectNoun?.second), verb.first));
 
-  final ablativeNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.abl);
-  if (ablativeNoun != null) {
-    accounting.accountFor(ablativeNoun.first);
-    pieces.add((SentencePiece.indirectObject, "by/from/with ${ablativeNoun.second.properConsideringPrimaryTranslation}"));
-  }
-
-  final objectNoun = verb.second.verbKind == VerbKind.intrans
+  Pair<int, Noun>? objectNoun = verb.second.verbKind == VerbKind.intrans
       ? null
       : getNearestGeneralNoun(accounting, verb.first, caze: verb.second.isToBe ? Case.nom : Case.acc);
+  if (objectNoun == null && verb.second.isToBe && verb.second.verbKind != VerbKind.intrans) {
+    objectNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.acc);
+  }
   if (objectNoun != null) {
     accounting.accountFor(objectNoun.first);
-    pieces.add((SentencePiece.object, objectNoun.second.verbProperConsideringPrimaryTranslation(verb.second)));
+    pieces.add((SentencePiece.object, objectNoun.second.verbProperConsideringPrimaryTranslation(verb.second), objectNoun.first));
   }
 
-  pieces.sort(((a, b) => a.$1.ordering.compareTo(b.$1.ordering)));
+  Pair<int, Noun>? accusativeNoun = getNearestGeneralNoun(accounting, verb.first,
+      caze: Case.acc, predicate: (noun) => noun is PrepositionedNoun);
+  while (accusativeNoun != null) {
+    accounting.accountFor(accusativeNoun.first);
+    String translation;
+    if (accusativeNoun.second is PrepositionedNoun) {
+      translation = accusativeNoun.second.properConsideringPrimaryTranslation;
+    } else {
+      throw "Expected prepositioned noun";
+    }
+    pieces.add((SentencePiece.indirectObject, translation, accusativeNoun.first));
+    accusativeNoun = getNearestGeneralNoun(accounting, accusativeNoun.first, caze: Case.acc);
+  }
+
+  Pair<int, Noun>? ablativeNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.abl);
+  while (ablativeNoun != null) {
+    accounting.accountFor(ablativeNoun.first);
+    String translation;
+    if (ablativeNoun.second is PrepositionedNoun) {
+      translation = ablativeNoun.second.properConsideringPrimaryTranslation;
+    } else {
+      translation = "by/from/with ${ablativeNoun.second.properConsideringPrimaryTranslation}";
+    }
+    pieces.add((SentencePiece.indirectObject, translation, ablativeNoun.first));
+    ablativeNoun = getNearestGeneralNoun(accounting, ablativeNoun.first, caze: Case.abl);
+  }
+
+  pieces.stableSort(((a, b) {
+    int primary = a.$1.ordering.compareTo(b.$1.ordering);
+    if (primary == 0) {            // within same-priority pieces
+      return a.$3.compareTo(b.$3); // compare by sentence order in the original latin
+    }
+    return primary;
+  }));
   final translatedSentence = pieces.map((e) => e.$2).join(" ").replaceAll("  ", " "); // deduplicate spaces
 
   if (accounting.isNotFullyAccountedFor) {
@@ -102,10 +133,12 @@ String? accountingBased(Sentence sentence) {
   return translatedSentence;
 }
 
-String? superParse(Sentence sentence) {
+const _printBackup = print;
+
+String? superParse(Sentence sentence, {void Function(String message) print = _printBackup}) {
   for (final parser in [accountingBased/*, standaloneVerb, verbWithNominative*/]) {
     print("${Fore.LIGHTBLACK_EX}${Style.DIM}> trying parser: ${parser.name}${Style.RESET_ALL}");
-    final result = parser.call(sentence);
+    final result = parser.call(sentence, print: print);
     if (result != null) return result;
   }
   return null;
