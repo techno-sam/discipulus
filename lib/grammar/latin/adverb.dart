@@ -33,7 +33,9 @@ class Adverb extends Word {
   ComparisonType get comparisonType => _comparisonType;
   List<String> get parts => _parts;
   List<List<String>> get translations => _translations;
-  String get primaryTranslation => applyComparison(_translations[0][0], comparisonType, stripLY: true);
+
+  String get _undecoratedPrimaryTranslation => word == "non" ? "do not" : _translations[0][0];
+  String get primaryTranslation => applyComparison(_undecoratedPrimaryTranslation, comparisonType, stripLY: true);
 
   bool get translateBeforeVerb => _parts.length == 1;
 

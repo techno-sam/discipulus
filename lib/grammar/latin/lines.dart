@@ -37,6 +37,7 @@ import 'package:discipulus/datatypes.dart';
 
 import 'adjective.dart';
 import 'adverb.dart';
+import 'conjunction.dart';
 
 enum PartsOfSpeech {
   verb,
@@ -69,7 +70,8 @@ enum _Mode {
   collectingAdjective,
   collectingPreposition,
   collectingAdverb,
-  collectingPronoun // these are shoved into nouns, probably fine
+  collectingPronoun, // these are shoved into nouns, probably fine
+  collectingConjunction
 }
 
 const _printBackup = print;
@@ -102,6 +104,9 @@ List<Word> parseToPOS(List<Line> lines, {void Function(String) print = _printBac
         } else if (line is L01Pronoun) {
           bits = [line];
           mode = _Mode.collectingPronoun;
+        } else if (line is L01Conjunction) {
+          bits = [line];
+          mode = _Mode.collectingConjunction;
         } else {
           print("Unexpected line $line during mode $mode");
         }
@@ -224,6 +229,25 @@ List<Word> parseToPOS(List<Line> lines, {void Function(String) print = _printBac
           print("Failed to handle line: $line");
         }
         break;
+      case _Mode.collectingConjunction:
+        if (line is L01Conjunction) {
+          bits.add(line);
+        } else if (line is L02Conjunction && iter.canPeek()) {
+          final Line next = iter.peeked;
+          if (next is L03Common) {
+            iter.moveNext();
+            for (final L01Conjunction bit in bits) {
+              out.add(Conjunction.lines(line01: bit, line02: line, line03: next));
+            }
+          } else {
+            print("Incorrect next line $line");
+          }
+          mode = _Mode.none;
+          bits = [];
+        } else {
+          print("Failed to handle line: $line");
+        }
+        break;
     }
   }
   return out;
@@ -246,6 +270,8 @@ class Line {
       L02Preposition.parse,
       L01Adverb.parse,
       L02Adverb.parse,
+      L01Conjunction.parse,
+      L02Conjunction.parse,
       L01Pronoun.parse,
       L02Pronoun.parse, // NOTE: this should be last of the L02 parsers
       L03Common.parse,
@@ -563,6 +589,42 @@ class L02Pronoun extends Line {
     if (match == null) return null;
 
     return L02Pronoun(original: text);
+  }
+}
+
+/**********/
+/* Conjunction */
+/**********/
+
+class L01Conjunction extends L01 {
+  String get word => split;
+
+  L01Conjunction({required super.original, required super.split});
+
+  static L01Conjunction? parse(String text) {
+    RegExpMatch? match = re.l01conjunction.firstMatch(text);
+    if (match == null) return null;
+
+    String split_ = match.namedGroup("word")!;
+
+    return L01Conjunction(original: text, split: split_);
+  }
+}
+
+class L02Conjunction extends Line {
+  late final String _word;
+
+ String get word => _word;
+
+  L02Conjunction({required super.original, required String word}): _word = word;
+
+  static L02Conjunction? parse(String text) {
+    RegExpMatch? match = re.l02conjunction.firstMatch(text);
+    if (match == null) return null;
+
+    String word = match.namedGroup("word")!;
+
+    return L02Conjunction(original: text, word: word);
   }
 }
 

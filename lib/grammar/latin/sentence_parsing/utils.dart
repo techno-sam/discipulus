@@ -92,7 +92,7 @@ void applyConjunctions(Sentence s) {
     throw "Cannot apply conjunctions to an accounting sentence";
   }
   // handle conjunctions
-  var nearestTriple = _getNearestTriple<Noun, Conjunction, Noun>(s, (a, b, c) => b.canMerge(a, c), 0);
+  var nearestTriple = _getNearestTriple<Noun, Conjunction, Noun>(s, (a, b, c) => b.canMergeEt(a, c), 0);
   while (nearestTriple != null) {
     final conjunction = nearestTriple.second.second;
     final nounA = nearestTriple.first.second;
@@ -101,7 +101,7 @@ void applyConjunctions(Sentence s) {
     s.words[nearestTriple.first.first] = merged;
     s.words.removeAt(nearestTriple.third.first);
     s.words.removeAt(nearestTriple.second.first);
-    nearestTriple = _getNearestTriple<Noun, Conjunction, Noun>(s, (a, b, c) => b.canMerge(a, c), 0);
+    nearestTriple = _getNearestTriple<Noun, Conjunction, Noun>(s, (a, b, c) => b.canMergeEt(a, c), 0);
   }
 }
 

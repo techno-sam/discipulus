@@ -129,4 +129,4 @@ class ProperNameSet {
   }
 }
 
-final ProperNameSet properNames = ProperNameSet("Cornelius Cornelia Flavia Marcus".split(" "));
+final ProperNameSet properNames = ProperNameSet("Cornelius Cornelia Flavia Marcus Sextus".split(" "));

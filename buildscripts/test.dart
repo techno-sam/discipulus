@@ -108,7 +108,8 @@ void main() {
     "Cornelia ambulat cito",
     "Cornelia ambulat citius",
     "Cornelia ambulat citissime",
-    "Cornelia iam sub arbore sedet"
+    "Cornelia iam sub arbore sedet",
+    "Sextus et Marcus non laborant et sunt raedae"
   ];
   for (Pair<int, String> pair in testSentences.enumerate) {
     final String testSentence = pair.second;

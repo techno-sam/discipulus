@@ -48,4 +48,9 @@ class Regexes {
   RegExp l01pronoun = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+PRON\s+\d\s+\d\s+)(?<case>[a-zA-Z]+)(?:\s+)(?<person_pl>S|P)(?:\s+)(?<gender>X|M|F|N|C)$");
   // https://regex101.com/r/ePXrPo/latest
   RegExp l02pronoun = RegExp(r"^(?:02 )(?:\s+\[[A-Z]+\])");
+
+  // https://regex101.com/r/zuH9fj/latest
+  RegExp l01conjunction = RegExp(r"^(?:01 )(?<word>[a-z]+)(?:\s+CONJ)$");
+  // https://regex101.com/r/2zBMS4/latest
+  RegExp l02conjunction = RegExp(r"^(?:02 )(?<word>[a-z]+)(?:\s+CONJ\s+\[[A-Z]+\])");
 }

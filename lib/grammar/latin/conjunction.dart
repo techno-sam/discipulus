@@ -24,27 +24,31 @@ import 'package:discipulus/utils/colors.dart';
 
 import 'noun.dart';
 
-enum ConjunctionType {
-  et("and")
-  ;
-  final String translation;
-
-  const ConjunctionType(this.translation);
-}
-
 class Conjunction extends Word {
-  late final ConjunctionType _type;
+  late final String _word;
+  late final List<List<String>> _translations;
 
-  ConjunctionType get type => _type;
+  String get word => _word;
+  List<List<String>> get translations => _translations;
+  String get primaryTranslation => _translations[0][0];
 
-  Conjunction({required ConjunctionType type}): _type = type;
+  Conjunction({required String word, required List<List<String>> translations}):
+        _word = word, _translations = translations;
+
+  Conjunction.lines({required L01Conjunction line01, required L02Conjunction line02, required L03Common line03}) {
+    assert(line01.word == line02.word);
+    _word = line01.word;
+    _translations = line03.translations;
+  }
+
+  bool get isEt => word == "et";
 
   @override
   PartsOfSpeech get pos => PartsOfSpeech.conjunction;
 
   @override
   String toString() {
-    return "Conjunction[${_type.name}] -> ${_type.translation}";
+    return "Conjunction[$word] -> $primaryTranslation";
   }
 
   @override
@@ -52,21 +56,12 @@ class Conjunction extends Word {
     return "${Fore.GREEN}${toString()}${Fore.RESET}";
   }
 
-  static Conjunction? parse(String str) {
-    for (final type in ConjunctionType.values) {
-      if (type.name.toLowerCase() == str.toLowerCase()) {
-        return Conjunction(type: type);
-      }
-    }
-    return null;
-  }
-
-  bool canMerge(Noun a, Noun b) {
-    return a.caze == b.caze;
+  bool canMergeEt(Noun a, Noun b) {
+    return a.caze == b.caze && isEt;
   }
 
   Noun? merge(Noun a, Noun b) {
-    if (!canMerge(a, b)) return null;
+    if (!canMergeEt(a, b)) return null;
     return CompoundNoun(a, b);
   }
 }

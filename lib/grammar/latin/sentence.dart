@@ -122,12 +122,6 @@ class SentenceBundle {
         continue;
       }
 
-      final Conjunction? conjunction = Conjunction.parse(word);
-      if (conjunction != null) {
-        processedWords.add([conjunction]);
-        continue;
-      }
-
       final String linesText = wordsLL.wordsDefault(word);
       final List<Line> lines = parseToLines(linesText);
       final List<Word> partsOfSpeech = parseToPOS(lines, print: print).where((w) {
