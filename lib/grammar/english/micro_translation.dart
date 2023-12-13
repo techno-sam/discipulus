@@ -18,6 +18,7 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/adjective.dart';
+import 'package:discipulus/grammar/latin/adverb.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/verb.dart';
 
@@ -31,13 +32,19 @@ String _appendE(String original, String suffix) {
   }
 }
 
-String applyComparison(String adjectiveTranslation, ComparisonType comparison) {
+String applyComparison(String adjectiveTranslation, ComparisonType comparison, {bool stripLY = false}) {
   switch (comparison) {
     case ComparisonType.pos:
       return adjectiveTranslation;
     case ComparisonType.comp:
+      if (stripLY && adjectiveTranslation.endsWith("ly")) {
+        adjectiveTranslation = adjectiveTranslation.substring(0, adjectiveTranslation.length - 2);
+      }
       return _appendE(adjectiveTranslation, "r");
     case ComparisonType.Super:
+      if (stripLY && adjectiveTranslation.endsWith("ly")) {
+        adjectiveTranslation = adjectiveTranslation.substring(0, adjectiveTranslation.length - 2);
+      }
       return _appendE(adjectiveTranslation, "st");
     default:
       return adjectiveTranslation;
@@ -76,8 +83,15 @@ String translateVerb(Verb verb, [Noun? subject]) {
   out += " ";
   if (verb.isToBe) {
     out += _conjugateToBe(verb.person);
+    if (verb is ModifiedVerb) {
+      if (verb.adverb.translateBeforeVerb) {
+        out = "${verb.adverb.primaryTranslation} $out";
+      } else {
+        out += " ${verb.adverb.primaryTranslation}";
+      }
+    }
   } else if (person == 3 && !plural) {
-    out += "${verb.primaryTranslation}s";
+    out += verb.primaryPluralTranslation;
   } else {
     out += verb.primaryTranslation;
   }

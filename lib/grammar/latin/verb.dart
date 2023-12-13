@@ -172,6 +172,8 @@ class Verb extends Word {
     _translations = line03.translations;
   }
 
+  String get primaryPluralTranslation => "${primaryTranslation}s";
+
   @override
   String toString() {
     return "Verb[${principleParts[0]} ${principleParts[1]}]${verbKind == VerbKind.x ? "" : verbKind} $tense $mood $person -> $primaryTranslation";

@@ -36,13 +36,15 @@ import 'package:discipulus/grammar/latin/regex.dart' show re;
 import 'package:discipulus/datatypes.dart';
 
 import 'adjective.dart';
+import 'adverb.dart';
 
 enum PartsOfSpeech {
   verb,
   noun,
   adjective,
   conjunction,
-  preposition
+  preposition,
+  adverb
 }
 
 abstract class Word {
@@ -65,7 +67,9 @@ enum _Mode {
   collectingNoun,
   collectingVerb,
   collectingAdjective,
-  collectingPreposition
+  collectingPreposition,
+  collectingAdverb,
+  collectingPronoun // these are shoved into nouns, probably fine
 }
 
 const _printBackup = print;
@@ -92,6 +96,12 @@ List<Word> parseToPOS(List<Line> lines, {void Function(String) print = _printBac
         } else if (line is L01Preposition) {
           bits = [line];
           mode = _Mode.collectingPreposition;
+        } else if (line is L01Adverb) {
+          bits = [line];
+          mode = _Mode.collectingAdverb;
+        } else if (line is L01Pronoun) {
+          bits = [line];
+          mode = _Mode.collectingPronoun;
         } else {
           print("Unexpected line $line during mode $mode");
         }
@@ -176,6 +186,44 @@ List<Word> parseToPOS(List<Line> lines, {void Function(String) print = _printBac
           print("Failed to handle line: $line");
         }
         break;
+      case _Mode.collectingAdverb:
+        if (line is L01Adverb) {
+          bits.add(line);
+        } else if (line is L02Adverb && iter.canPeek()) {
+          final Line next = iter.peeked;
+          if (next is L03Common) {
+            iter.moveNext();
+            for (final L01Adverb bit in bits) {
+              out.add(Adverb.lines(line01: bit, line02: line, line03: next));
+            }
+          } else {
+            print("Incorrect next line $line");
+          }
+          mode = _Mode.none;
+          bits = [];
+        } else {
+          print("Failed to handle line: $line");
+        }
+        break;
+      case _Mode.collectingPronoun:
+        if (line is L01Pronoun) {
+          bits.add(line);
+        } else if (line is L02Pronoun && iter.canPeek()) {
+          final Line next = iter.peeked;
+          if (next is L03Common) {
+            iter.moveNext();
+            for (final L01Pronoun bit in bits) {
+              out.add(Noun.pronounLines(line01: bit, line02: line, line03: next));
+            }
+          } else {
+            print("Incorrect next line $line");
+          }
+          mode = _Mode.none;
+          bits = [];
+        } else {
+          print("Failed to handle line: $line");
+        }
+        break;
     }
   }
   return out;
@@ -196,6 +244,10 @@ class Line {
       L02Adjective.parse,
       L01Preposition.parse,
       L02Preposition.parse,
+      L01Adverb.parse,
+      L02Adverb.parse,
+      L01Pronoun.parse,
+      L02Pronoun.parse, // NOTE: this should be last of the L02 parsers
       L03Common.parse,
     ];
     for (Line? Function(String) parser in parsers) {
@@ -425,6 +477,95 @@ class L02Preposition extends Line {
     return L02Preposition(original: text, caze: caze);
   }
 }
+
+/**********/
+/* Adverb */
+/**********/
+
+class L01Adverb extends L01 {
+  late final ComparisonType _comparisonType;
+
+  ComparisonType get comparisonType => _comparisonType;
+  String get word => split;
+
+  L01Adverb({required super.original, required super.split, required ComparisonType comparisonType}): _comparisonType = comparisonType;
+
+  static L01Adverb? parse(String text) {
+    RegExpMatch? match = re.l01adverb.firstMatch(text);
+    if (match == null) return null;
+
+    String split_ = match.namedGroup("word")!;
+    String comparisonType_ = match.namedGroup("comparison_type")!.toLowerCase();
+
+    ComparisonType? comparisonType = ComparisonType.decode(comparisonType_);
+    if (comparisonType == null) {
+      print("[L01Adverb] Comparison type not found for $text");
+      return null;
+    }
+    return L01Adverb(original: text, split: split_, comparisonType: comparisonType);
+  }
+}
+
+class L02Adverb extends Line {
+  late final List<String> _parts;
+
+  List<String> get parts => _parts;
+
+  L02Adverb({required super.original, required List<String> parts}): _parts = parts;
+
+  static L02Adverb? parse(String text) {
+    RegExpMatch? match = re.l02adverb.firstMatch(text);
+    if (match == null) return null;
+
+    String parts_ = match.namedGroup("parts")!;
+    List<String> parts = parts_.split(", ");
+
+    return L02Adverb(original: text, parts: parts);
+  }
+}
+
+/**********/
+/* Pronoun */
+/**********/
+
+class L01Pronoun extends L01 {
+  final Case caze; // not a typo, 'case' is a reserved word
+  final bool plural;
+  final Gender gender;
+
+  const L01Pronoun({required super.original, required super.split, required this.caze, required this.plural, required this.gender});
+
+  static L01Pronoun? parse(String text) {
+    RegExpMatch? match = re.l01pronoun.firstMatch(text);
+    if (match == null) return null;
+
+    String split_ = match.namedGroup("split")!;
+    String case_ = match.namedGroup("case")!.toLowerCase();
+    bool plural_ = match.namedGroup("person_pl")!.toLowerCase() == "p";
+    String gender_ = match.namedGroup("gender")!.toLowerCase();
+
+    Case? caze = Case.decode(case_);
+    Gender? gender = Gender.decode(gender_);
+    if (caze == null || gender == null) {
+      print("[L01Pronoun] Case or gender not found for $text");
+      return null;
+    }
+    return L01Pronoun(original: text, split: split_, caze: caze, plural: plural_, gender: gender);
+  }
+}
+
+class L02Pronoun extends Line {
+  L02Pronoun({required super.original});
+
+  /// due to lack of defining characteristics, this should be called *absolute last* of the L02 parsers
+  static L02Pronoun? parse(String text) {
+    RegExpMatch? match = re.l02pronoun.firstMatch(text);
+    if (match == null) return null;
+
+    return L02Pronoun(original: text);
+  }
+}
+
 
 /***********/
 /* Common */

@@ -18,12 +18,14 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/ffi/words_low_level.dart';
+import 'package:discipulus/grammar/latin/adverb.dart';
 import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
-import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyConjunctions, applyPrepositions;
+import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyAdverbs, applyConjunctions, applyPrepositions;
 import 'package:discipulus/utils/colors.dart';
 import 'package:discipulus/utils/print_buffer.dart';
+import 'package:discipulus/utils/tuning.dart' as tuning;
 
 import 'lines.dart';
 import 'noun.dart';
@@ -128,7 +130,14 @@ class SentenceBundle {
 
       final String linesText = wordsLL.wordsDefault(word);
       final List<Line> lines = parseToLines(linesText);
-      final List<Word> partsOfSpeech = parseToPOS(lines, print: print);
+      final List<Word> partsOfSpeech = parseToPOS(lines, print: print).where((w) {
+        if (tuning.whenDoesNotExist) {
+          if (w is Adverb && w.parts[0] == "cum") {
+            return false;
+          }
+        }
+        return true;
+      }).toList();
       if (partsOfSpeech.isEmpty) {
         final String indentedOutput = linesText.split("\n").map((s) => "> $s").join("\n");
         throw "Word could not be translated: \"$word\"\n$indentedOutput";
@@ -159,6 +168,7 @@ class SentenceBundle {
       applyAdjectives(s);
       applyPrepositions(s);
       applyConjunctions(s);
+      applyAdverbs(s);
       String? parsed = superParse(s, print: printBuffer.printSham);
       firstTranslation ??= parsed;
       if (parsed != null) {

@@ -60,6 +60,12 @@ enum Gender {
   c("Common (masc and/or fem)")
   ;
 
+  bool equals(Gender other) {
+    return this == other || this == x || other == x
+        || (this == c && (other == m || other == f))
+        || (other == c && (this == m || this == f));
+  }
+
   final String description;
   const Gender(this.description);
 
@@ -145,6 +151,15 @@ class Noun extends Word {
     _isProper = false;
   }
 
+  Noun.pronounLines({required L01Pronoun line01, required L02Pronoun line02, required L03Common line03}) {
+    _caze = line01.caze;
+    _plural = line01.plural;
+    _gender = line01.gender;
+    _parts = Couple(line01.split, line01.split);
+    _translations = line03.translations;
+    _isProper = true;
+  }
+
   @override
   PartsOfSpeech get pos => PartsOfSpeech.noun;
 
@@ -160,7 +175,7 @@ class Noun extends Word {
 
   bool canModify(Adjective adjective) {
     if (isProper) throw "Modifying a proper noun is not (yet) supported";
-    return adjective.plural == plural && adjective.gender == gender && adjective.caze == caze;
+    return adjective.plural == plural && adjective.gender.equals(gender) && adjective.caze == caze;
   }
   
   Noun? modify(Adjective adjective) {

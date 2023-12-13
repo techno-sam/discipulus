@@ -18,6 +18,7 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/adjective.dart';
+import 'package:discipulus/grammar/latin/adverb.dart';
 import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/preposition.dart';
@@ -102,6 +103,48 @@ void applyConjunctions(Sentence s) {
     s.words.removeAt(nearestTriple.second.first);
     nearestTriple = _getNearestTriple<Noun, Conjunction, Noun>(s, (a, b, c) => b.canMerge(a, c), 0);
   }
+}
+
+void applyAdverbs(Sentence sentence) {
+  if (sentence is AccountingSentence) {
+    throw "Cannot apply adverbs to an accounting sentence";
+  }
+
+  // handle adverb-verb pairs
+  var nearestPair = _getNearestPair<Adverb, Verb>(sentence, (a, b) => true, 0);
+  while (nearestPair != null) {
+    final adverb = nearestPair.first.second;
+    final verb = nearestPair.second.second;
+    final modified = ModifiedVerb(verb: verb, adverb: adverb);
+    sentence.words[nearestPair.first.first] = modified;
+    sentence.words.removeAt(nearestPair.second.first);
+    nearestPair = _getNearestPair<Adverb, Verb>(sentence, (a, b) => true, 0);
+  }
+
+  // handle verb-adverb pairs
+  var nearestPair2 = _getNearestPair<Verb, Adverb>(sentence, (a, b) => true, 0);
+  while (nearestPair2 != null) {
+    final adverb = nearestPair2.second.second;
+    final verb = nearestPair2.first.second;
+    final modified = ModifiedVerb(verb: verb, adverb: adverb);
+    sentence.words[nearestPair2.first.first] = modified;
+    sentence.words.removeAt(nearestPair2.second.first);
+    nearestPair2 = _getNearestPair<Verb, Adverb>(sentence, (a, b) => true, 0);
+  }
+
+  // scorched-earth tactics: ALL the adverbs
+  for (final adverb in sentence.words.shallowCopy().enumerate.whereSecondType<Adverb>()) {
+    final verb = getVerb(sentence);
+    if (verb != null) {
+      final modified = ModifiedVerb(verb: verb.second, adverb: adverb.second);
+      sentence.words[verb.first] = modified;
+      sentence.words.removeAt(adverb.first);
+    }
+  }
+}
+
+Pair<int, Adverb> getAdverb(Sentence sentence) {
+  return sentence.enumeratedUnusedWords.whereSecondType<Adverb>().first;
 }
 
 Pair<int, Verb>? getVerb(Sentence sentence) {

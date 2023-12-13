@@ -38,4 +38,14 @@ class Regexes {
   RegExp l01preposition = RegExp(r"^(?:01 )(?<word>[a-z]+)(?:\s+PREP\s+)(?<case>[a-zA-Z]+)$");
   // https://regex101.com/r/eiSGvF/latest
   RegExp l02preposition = RegExp(r"^(?:02 )(?<word>[a-zA-Z]+)(?:\s+PREP\s+)(?<case>[a-zA-Z]+)(?:\s+\[[A-Z]+\])");
+
+  // https://regex101.com/r/yQm1yc/latest
+  RegExp l01adverb = RegExp(r"^(?:01 )(?<word>[a-z]+)(?:\s+ADV\s+)(?<comparison_type>X|POS|COMP|SUPER)$");
+  // https://regex101.com/r/JelAc4/latest
+  RegExp l02adverb = RegExp(r"^(?:02 )(?<parts>[a-zA-Z]+(?:,\s[a-zA-Z]+)*)(?:\s+ADV\s+\[[A-Z]+\])");
+
+  // https://regex101.com/r/nXhr6L/latest
+  RegExp l01pronoun = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+PRON\s+\d\s+\d\s+)(?<case>[a-zA-Z]+)(?:\s+)(?<person_pl>S|P)(?:\s+)(?<gender>X|M|F|N|C)$");
+  // https://regex101.com/r/ePXrPo/latest
+  RegExp l02pronoun = RegExp(r"^(?:02 )(?:\s+\[[A-Z]+\])");
 }
