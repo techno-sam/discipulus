@@ -18,6 +18,7 @@
 
 // https://mk270.github.io/whitakers-words/programme.html
 import 'package:discipulus/datatypes.dart';
+import 'package:discipulus/grammar/english/micro_translation.dart';
 import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/utils/colors.dart';
 
@@ -59,6 +60,16 @@ enum Gender {
   n("Neuter"),
   c("Common (masc and/or fem)")
   ;
+
+  String get pronoun {
+    return switch (this) {
+      Gender.x => "he/she/it",
+      Gender.m => "he",
+      Gender.f => "she",
+      Gender.n => "they/it",
+      Gender.c => "he/she",
+    };
+  }
 
   bool equals(Gender other) {
     return this == other || this == x || other == x
@@ -119,7 +130,7 @@ class Noun extends Word {
   List<List<String>> get translations => _translations;
   bool get isProper => _isProper;
 
-  String get primaryTranslation => _translations[0][0] + (plural ? "s" : "");
+  String get primaryTranslation => pluralizeNoun(_translations[0][0], plural);
   String get properConsideringPrimaryTranslation => isProper ? primaryTranslation.capitalize : "the $primaryTranslation";
 
   String verbProperConsideringPrimaryTranslation(Verb verb) {

@@ -134,7 +134,7 @@ void applyAdverbs(Sentence sentence) {
 
   // scorched-earth tactics: ALL the adverbs
   for (final adverb in sentence.words.shallowCopy().enumerate.whereSecondType<Adverb>()) {
-    final verb = getVerb(sentence);
+    final verb = getVerb(sentence, Mood.ind);
     if (verb != null) {
       final modified = ModifiedVerb(verb: verb.second, adverb: adverb.second);
       sentence.words[verb.first] = modified;
@@ -143,12 +143,33 @@ void applyAdverbs(Sentence sentence) {
   }
 }
 
+List<Sentence> splitClauses(Sentence sentence) {
+  if (sentence is AccountingSentence) {
+    throw "Cannot split clauses in an accounting sentence";
+  }
+  List<Sentence> out = [];
+  List<(int, int)> ranges = [];
+  int lastConjunctionIndex = 0;
+  for (int i = 0; i < sentence.words.length; i++) {
+    final word = sentence.words[i];
+    if (word is Conjunction) {
+      ranges.add((lastConjunctionIndex, i));
+      lastConjunctionIndex = i;
+    }
+  }
+  ranges.add((lastConjunctionIndex, sentence.words.length));
+  for (final range in ranges) {
+    out.add(Sentence(words: sentence.words.sublist(range.$1, range.$2), original: sentence.original));
+  }
+  return out;
+}
+
 Pair<int, Adverb> getAdverb(Sentence sentence) {
   return sentence.enumeratedUnusedWords.whereSecondType<Adverb>().first;
 }
 
-Pair<int, Verb>? getVerb(Sentence sentence) {
-  return sentence.enumeratedUnusedWords.whereSecondType<Verb>().firstOrNull;
+Pair<int, Verb>? getVerb(Sentence sentence, Mood mood) {
+  return sentence.enumeratedUnusedWords.whereSecondType<Verb>().where((p) => p.second.mood == mood).firstOrNull;
 }
 
 Pair<int, Noun>? getNearestSubjectNoun(Sentence sentence, Person verbPerson, int verbIndex) {

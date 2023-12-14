@@ -53,9 +53,9 @@ enum VerbKind {
   abl("taking ablative"),*/
   trans("transitive"),
   intrans("intransitive"),
-/*  impers("impersonal"),
+/*  impers("impersonal"),*/
   dep("deponent"),
-  semidep("semi-deponent"),
+/*  semidep("semi-deponent"),
   perfdep("perfect deponent"),*/
   ;
 
@@ -76,12 +76,19 @@ enum VerbKind {
 }
 
 class Person {
+  static final any = Person._any();
   final int person;
   final bool plural;
+  late final bool _isAny;
+
+  bool get isAny => _isAny;
 
   Person({required this.person, required this.plural}) {
     assert(person >= 1 && person <= 3, "Invalid person");
+    _isAny = false;
   }
+
+  Person._any() : person = 0, plural = false, _isAny = true;
 
   @override
   String toString() {
@@ -89,12 +96,12 @@ class Person {
   }
 
   @override
-  int get hashCode => Object.hash(person, plural);
+  int get hashCode => Object.hash(person, plural, _isAny);
 
   @override
   bool operator ==(covariant Person other) {
     if (super == other) return true;
-    return person == other.person && plural == other.plural;
+    return person == other.person && plural == other.plural && _isAny == other._isAny;
   }
 
   static Iterable<Person> variants() {
@@ -146,7 +153,7 @@ class Verb extends Word {
   bool get isToBe => principleParts[0] == "sum" && principleParts[1] == "esse"
       && principleParts[2] == "fui" && principleParts[3] == "futurus";
 
-  String get primaryTranslation => _translations[0][0];
+  String get primaryTranslation => (mood == Mood.inf ? "to " : "") + _translations[0][0];
 
   Verb({required Tense tense, required Person person, required Mood mood,
     required String principleParts, required String translations,

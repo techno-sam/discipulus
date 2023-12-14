@@ -328,13 +328,40 @@ extension Capitalizable on String {
   String get capitalize => isEmpty ? this : "${this[0].toUpperCase()}${length == 1 ? "" : substring(1)}";
 }
 
+extension RemovableParentheticals on String {
+  String removeParentheticals() {
+    String out = "";
+    int inParenthetical = 0;
+    for (int i = 0; i < length; i++) {
+      if (this[i] == "(") {
+        inParenthetical += 1;
+      } else if (this[i] == ")") {
+        if (inParenthetical > 0) {
+          inParenthetical -= 1;
+        }
+      } else if (inParenthetical == 0) {
+        out += this[i];
+      }
+    }
+    return out;
+  }
+}
+
 extension ShallowCopiable<E> on List<E> {
   List<E> shallowCopy() {
     return [...this];
   }
 }
 
-extension FunctionName<R, P> on R Function(P) {
+extension FunctionName1<R, P> on R Function(P) {
+  String get name => toString().split("'")[1];
+}
+
+extension FunctionName2<R, P1, P2> on R Function(P1, P2) {
+  String get name => toString().split("'")[1];
+}
+
+extension FunctionName3<R, P1, P2, P3> on R Function(P1, P2, P3) {
   String get name => toString().split("'")[1];
 }
 

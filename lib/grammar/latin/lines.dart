@@ -309,11 +309,12 @@ class L01Verb extends L01 {
     String tense_ = match.namedGroup("tense")!.toLowerCase();
     String mood_ = match.namedGroup("mood")!.toLowerCase();
     int personNum_ = int.parse(match.namedGroup("person_num")!);
-    bool personPl_ = match.namedGroup("person_pl")!.toLowerCase() == "p";
+    String personId_ = match.namedGroup("person_pl")!.toLowerCase();
+    bool personPl_ = personId_ == "p";
 
     Tense? tense = Tense.decode(tense_);
     Mood? mood = Mood.decode(mood_);
-    Person person = Person(person: personNum_, plural: personPl_);
+    Person person = personId_ == "x" ? Person.any : Person(person: personNum_, plural: personPl_);
     if (tense == null || mood == null) {
       print("[L01Verb] Tense or mood not found for $text");
       return null;
@@ -646,7 +647,7 @@ class L03Common extends Line {
 
     Iterable<String> meanings = translationText.split(";").map((s) => s.trim());
     List<List<String>> translations = meanings.map(
-            (s) => s
+            (s) => s.removeParentheticals().trim()
             .split(RegExp(r"[,/]"))
             .map((s) => s.trim())
             .toList(growable: false)

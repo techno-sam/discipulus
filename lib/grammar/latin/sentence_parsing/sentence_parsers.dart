@@ -18,6 +18,7 @@
 
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart' as english;
+import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/preposition.dart';
@@ -40,7 +41,7 @@ String? standaloneVerb(Sentence sentence, {void Function(String message) print =
 }
 
 String? verbWithNominative(Sentence sentence, {void Function(String message) print = _printBackup}) {
-  final verb = getVerb(sentence);
+  final verb = getVerb(sentence, Mood.ind);
   if (verb == null) return null;
   final noun = getNearestSubjectNoun(sentence, verb.second.person, verb.first);
   if (noun == null) return null;
@@ -48,13 +49,26 @@ String? verbWithNominative(Sentence sentence, {void Function(String message) pri
 }
 
 enum SentencePiece {
+  leadingConjunction(-1),
   subject_verb(0), // ignore: constant_identifier_names
   object(1),
   indirectObject(2),
+  infinitiveVerb(3),
   ;
   final int ordering;
 
   const SentencePiece(this.ordering);
+}
+
+Noun? getNearestSuperSubject(List<Noun> superSubjectStack, Person verbPerson) {
+  if (verbPerson.person != 3) return null;
+  for (final noun in superSubjectStack.reversed) {
+    if (noun.plural == verbPerson.plural && noun.caze == Case.nom) {
+      return noun;
+    }
+  }
+  return null;
+
 }
 
 /*
@@ -64,20 +78,35 @@ Sentence order:
 [{accusative noun | preposition-accusative pair}]
 [by/from/with {ablative noun | preposition-ablative pair}]
  */
-String? accountingBased(Sentence sentence, {void Function(String message) print = _printBackup}) {
+// should modify superSubjectStack to add own subject for future sentences
+String? accountingBased(Sentence sentence, List<Noun> superSubjectStack, bool isPrimaryClause, {void Function(String message) print = _printBackup}) {
   final AccountingSentence accounting = sentence.makeAccounting();
 
-  final verb = getVerb(accounting);
+  final verb = getVerb(accounting, Mood.ind);
   if (verb == null) return null;
   accounting.accountFor(verb.first);
 
-  final subjectNoun = getNearestSubjectNoun(accounting, verb.second.person, verb.first);
+  Noun? subjectNoun = getNearestSuperSubject(superSubjectStack, verb.second.person);
+  final bool subjectNounFromSuper = subjectNoun != null;
+  if (subjectNoun == null) {
+    final subjectNounDat = getNearestSubjectNoun(accounting, verb.second.person, verb.first);
+    subjectNoun = subjectNounDat?.second;
+    if (subjectNounDat != null) {
+      accounting.accountFor(subjectNounDat.first);
+    }
+  }
   if (subjectNoun != null) {
-    accounting.accountFor(subjectNoun.first);
+    superSubjectStack.add(subjectNoun);
   }
 
   final List<(SentencePiece, String, int)> pieces = [];
-  pieces.add((SentencePiece.subject_verb, english.translateVerb(verb.second, subjectNoun?.second), verb.first));
+  pieces.add((SentencePiece.subject_verb, english.translateVerb(verb.second, subjectNoun, subjectNounFromSuper), verb.first));
+
+  if (!isPrimaryClause && sentence.words[0] is Conjunction) {
+    Conjunction conjunction = sentence.words[0] as Conjunction;
+    accounting.accountFor(0);
+    pieces.add((SentencePiece.leadingConjunction, conjunction.primaryTranslation, 0));
+  }
 
   Pair<int, Noun>? objectNoun = verb.second.verbKind == VerbKind.intrans
       ? null
@@ -117,6 +146,25 @@ String? accountingBased(Sentence sentence, {void Function(String message) print 
     ablativeNoun = getNearestGeneralNoun(accounting, ablativeNoun.first, caze: Case.abl);
   }
 
+  Pair<int, Noun>? dativeNoun = getNearestGeneralNoun(accounting, verb.first, caze: Case.dat);
+  while (dativeNoun != null) {
+    accounting.accountFor(dativeNoun.first);
+    String translation;
+    if (dativeNoun.second is PrepositionedNoun) {
+      translation = dativeNoun.second.properConsideringPrimaryTranslation;
+    } else {
+      translation = "to/for ${dativeNoun.second.properConsideringPrimaryTranslation}";
+    }
+    pieces.add((SentencePiece.indirectObject, translation, dativeNoun.first));
+    dativeNoun = getNearestGeneralNoun(accounting, dativeNoun.first, caze: Case.abl);
+  }
+
+  final Pair<int, Verb>? infinitiveVerb = getVerb(accounting, Mood.inf);
+  if (infinitiveVerb != null) {
+    accounting.accountFor(infinitiveVerb.first);
+    pieces.add((SentencePiece.infinitiveVerb, infinitiveVerb.second.primaryTranslation, infinitiveVerb.first));
+  }
+
   pieces.stableSort(((a, b) {
     int primary = a.$1.ordering.compareTo(b.$1.ordering);
     if (primary == 0) {            // within same-priority pieces
@@ -135,10 +183,10 @@ String? accountingBased(Sentence sentence, {void Function(String message) print 
 
 const _printBackup = print;
 
-String? superParse(Sentence sentence, {void Function(String message) print = _printBackup}) {
+String? superParse(Sentence sentence, List<Noun> superSubjectStack, bool isPrimaryClause, {void Function(String message) print = _printBackup}) {
   for (final parser in [accountingBased/*, standaloneVerb, verbWithNominative*/]) {
     print("${Fore.LIGHTBLACK_EX}${Style.DIM}> trying parser: ${parser.name}${Style.RESET_ALL}");
-    final result = parser.call(sentence, print: print);
+    final result = parser.call(sentence, superSubjectStack, isPrimaryClause, print: print);
     if (result != null) return result;
   }
   return null;

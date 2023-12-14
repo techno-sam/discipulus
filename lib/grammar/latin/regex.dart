@@ -20,9 +20,9 @@ final Regexes re = Regexes();
 
 class Regexes {
   // https://regex101.com/r/oeeOrH/latest
-  RegExp l01verb = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+V\s+\d\s+\d\s+)(?<tense>[a-zA-Z]+)(?:\s+)(?<voice>[a-zA-Z]+)(?:\s+)(?<mood>[a-zA-Z]+)(?:\s+)(?<person_num>\d)(?:\s+)(?<person_pl>S|P)$");
+  RegExp l01verb = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+V\s+\d\s+\d\s+)(?<tense>[a-zA-Z]+)(?:\s+)(?:(?:(?<voice>[a-zA-Z]+)(?:\s+))|\s*)(?<mood>[a-zA-Z]+)(?:\s+)(?<person_num>\d)(?:\s+)(?<person_pl>S|P|X)");
   // https://regex101.com/r/VnXEaF/latest
-  RegExp l02verb = RegExp(r"^(?:02 )(?<parts>(?:[a-zA-Z]+(?:,\s)?){3,4})(?:\s+V\s+(?:\(\d[a-z]+\))?\s+(?<verb_type>X|TO_BE|TO_BEING|GEN|DAT|ABL|TRANS|INTRANS|IMPERS|DEP|SEMIDEP|PERFDEP)?\s+\[[A-Z]+\])");
+  RegExp l02verb = RegExp(r"^(?:02 )(?<parts>(?:[-a-zA-Z ]*[-a-zA-Z](?:,\s)?){3,4})(?:\s+V\s+(?:\(\d[a-z]+\))?\s+(?<verb_type>X|TO_BE|TO_BEING|GEN|DAT|ABL|TRANS|INTRANS|IMPERS|DEP|SEMIDEP|PERFDEP)?\s+\[[A-Z]+\])");
 
   // https://regex101.com/r/any4DT/latest
   RegExp l01noun = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+N\s+\d\s+\d\s+)(?<case>[a-zA-Z]+)(?:\s+)(?<person_pl>S|P)(?:\s+)(?<gender>X|M|F|N|C)$");

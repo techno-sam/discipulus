@@ -22,7 +22,7 @@ import 'package:discipulus/grammar/latin/adverb.dart';
 import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
-import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyAdverbs, applyConjunctions, applyPrepositions;
+import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyAdverbs, applyConjunctions, applyPrepositions, splitClauses;
 import 'package:discipulus/utils/colors.dart';
 import 'package:discipulus/utils/print_buffer.dart';
 import 'package:discipulus/utils/tuning.dart' as tuning;
@@ -162,8 +162,24 @@ class SentenceBundle {
       applyAdjectives(s);
       applyPrepositions(s);
       applyConjunctions(s);
-      applyAdverbs(s);
-      String? parsed = superParse(s, print: printBuffer.printSham);
+
+      List<Sentence> clauses = splitClauses(s);
+      clauses.forEach(applyAdverbs);
+      List<String?> parsedBits = [];
+      List<Noun> superSubjectStack = [];
+      for (Pair<int, Sentence> iClause in clauses.enumerate) {
+        final i = iClause.first;
+        final clause = iClause.second;
+
+        String? parsed = superParse(clause, superSubjectStack, i == 0, print: printBuffer.printSham);
+        parsedBits.add(parsed);
+      }
+      String? parsed;
+      if (parsedBits.any((s) => s == null)) {
+        parsed = null;
+      } else {
+        parsed = parsedBits.join(" ");
+      }
       firstTranslation ??= parsed;
       if (parsed != null) {
         allTranslations.add(parsed);

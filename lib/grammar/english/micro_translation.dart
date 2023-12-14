@@ -64,12 +64,22 @@ String _conjugateToBe(Person person) {
   return "";
 }
 
-String translateVerb(Verb verb, [Noun? subject]) {
-  String out = "";
+const _specialPlurals = {
+  "woman": "women",
+  "man": "men"
+};
 
-  final person = verb.person.person;
-  final plural = verb.person.plural;
-  switch (person) {
+String pluralizeNoun(String noun, bool plural) {
+  if (!plural) {
+    return noun;
+  }
+  return _specialPlurals[noun] ?? "${noun}s";
+}
+
+String generatePronoun(Person person, Gender gender) {
+  String out = "";
+  final plural = person.plural;
+  switch (person.person) {
     case 1:
       out += plural ? "we" : "I";
       break;
@@ -77,19 +87,47 @@ String translateVerb(Verb verb, [Noun? subject]) {
       out += plural ? "y'all" : "you";
       break;
     case 3:
-      out += (subject != null && subject.plural == plural ? subject.properConsideringPrimaryTranslation : null) ?? (plural ? "they" : "he/she/it");
+      out += (plural ? "they" : gender.pronoun);
       break;
+  }
+  return out;
+}
+
+String translateVerb(Verb verb, [Noun? subject, bool subjectNounFromSuperClause = false]) {
+  String out = "";
+
+  final person = verb.person.person;
+  final plural = verb.person.plural;
+  if (subjectNounFromSuperClause && subject != null) {
+    out += generatePronoun(verb.person, subject.gender);
+  } else {
+    switch (person) {
+      case 1:
+        out += plural ? "we" : "I";
+        break;
+      case 2:
+        out += plural ? "y'all" : "you";
+        break;
+      case 3:
+        out += (subject != null && subject.plural == plural ? subject
+            .properConsideringPrimaryTranslation : null) ??
+            (plural ? "they" : "he/she/it");
+        break;
+    }
   }
   out += " ";
   if (verb.isToBe) {
-    out += _conjugateToBe(verb.person);
+    String verbPart = _conjugateToBe(verb.person);
     if (verb is ModifiedVerb) {
-      if (verb.adverb.translateBeforeVerb) {
-        out = "${verb.adverb.primaryTranslation} $out";
+      if (verb.adverb.parts[0] == "non") {
+        verbPart += " not";
+      } else if (verb.adverb.translateBeforeVerb) {
+        verbPart = "${verb.adverb.primaryTranslation} $verbPart";
       } else {
-        out += " ${verb.adverb.primaryTranslation}";
+        verbPart += " ${verb.adverb.primaryTranslation}";
       }
     }
+    out += verbPart;
   } else if (person == 3 && !plural) {
     out += verb.primaryPluralTranslation;
   } else {
