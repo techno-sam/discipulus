@@ -112,7 +112,12 @@ void main() {
     "Sextus et Marcus non laborant et sunt raedae",
     "Sextus et Marcus non laborant quod sunt pueri Romani et non volunt laborare",
     "Cornelia et pueri Romani glires edunt in foro quod famem habent",
-    "Sextus et Flavia glires non edunt quod non sunt cives Romanae"
+    "Sextus et Flavia glires non edunt quod non sunt cives Romanae",
+    "Sextus dat glirem puellae Romanae",
+    "Cornelia amat ambulare",
+    //"multis in civitatibus tumulos conspicari licet", // from https://classics.domains.skidmore.edu/ovid/campus-only/clauses.pdf "in many tribes it is permitted to view the mounds."
+    //"proximi sunt Germanis" // fixme - can't handle to-be(adjective) yet
+    //"Cornelia non ambulat"
   ];
   for (Pair<int, String> pair in testSentences.enumerate) {
     final String testSentence = pair.second;
