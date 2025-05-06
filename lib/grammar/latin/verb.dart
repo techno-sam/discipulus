@@ -179,7 +179,7 @@ class Verb extends Word {
     _translations = line03.translations;
   }
 
-  String get primaryPluralTranslation => "${primaryTranslation}s";
+  String get primary3SingTranslation => "${primaryTranslation}s";
 
   @override
   String toString() {

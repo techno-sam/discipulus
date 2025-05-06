@@ -37,6 +37,20 @@ class Adverb extends Word {
   String get _undecoratedPrimaryTranslation => word == "non" ? "do not" : _translations[0][0];
   String get primaryTranslation => applyComparison(_undecoratedPrimaryTranslation, comparisonType, stripLY: true);
 
+  String _translateWithVerb(Verb verb, bool is3Sing) {
+    if (word == "non") {
+      String negative = is3Sing ? "does not" : "do not";
+      return "$negative ${verb.primaryTranslation}";
+    } else {
+      String verbTranslation = is3Sing ?
+          verb.primary3SingTranslation :
+          verb.primaryTranslation;
+      return translateBeforeVerb
+          ? "$primaryTranslation $verbTranslation"
+          : "$verbTranslation $primaryTranslation";
+    }
+  }
+
   bool get translateBeforeVerb => _parts.length == 1;
 
   Adverb({required String word, required ComparisonType comparisonType,
@@ -107,14 +121,10 @@ class ModifiedVerb extends Word implements Verb {
   Person get person => verb.person;
 
   @override
-  String get primaryTranslation => adverb.translateBeforeVerb
-      ? "${adverb.primaryTranslation} ${verb.primaryTranslation}"
-      : "${verb.primaryTranslation} ${adverb.primaryTranslation}";
+  String get primaryTranslation => adverb._translateWithVerb(verb, false);
 
   @override
-  String get primaryPluralTranslation => adverb.translateBeforeVerb
-      ? "${adverb.primaryTranslation} ${verb.primaryPluralTranslation}"
-      : "${verb.primaryPluralTranslation} ${adverb.primaryTranslation}";
+  String get primary3SingTranslation => adverb._translateWithVerb(verb, true);
 
   @override
   List<String> get principleParts => verb.principleParts;

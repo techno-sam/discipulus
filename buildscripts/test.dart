@@ -117,8 +117,11 @@ void main() {
     "Cornelia amat ambulare",
     //"multis in civitatibus tumulos conspicari licet", // from https://classics.domains.skidmore.edu/ovid/campus-only/clauses.pdf "in many tribes it is permitted to view the mounds."
     //"proximi sunt Germanis" // fixme - can't handle to-be(adjective) yet
-    //"Cornelia non ambulat"
+    "Cornelia non ambulat",
+    "Cornelia et pueri Romani timidi glires edunt in foro",
+    //"Cornelia et pueri Romani timidi glires edunt foro"
   ];
+
   for (Pair<int, String> pair in testSentences.enumerate) {
     final String testSentence = pair.second;
     print("\n\nAll possibilities for ${Style.BRIGHT}$testSentence${Style.RESET_ALL}${Fore.LIGHTBLACK_EX}${Style.DIM}");

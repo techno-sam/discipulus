@@ -129,7 +129,7 @@ String translateVerb(Verb verb, [Noun? subject, bool subjectNounFromSuperClause 
     }
     out += verbPart;
   } else if (person == 3 && !plural) {
-    out += verb.primaryPluralTranslation;
+    out += verb.primary3SingTranslation;
   } else {
     out += verb.primaryTranslation;
   }

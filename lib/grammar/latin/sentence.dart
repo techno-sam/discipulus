@@ -156,9 +156,9 @@ class SentenceBundle {
     print("${Style.RESET_ALL}all sentence possibilities:");
     String? firstTranslation;
     final List<String> allTranslations = [];
-    for (Sentence s in allPossibleSentences()) {
+    for (final Sentence s0 in allPossibleSentences()) {
       printBuffer.clear();
-      s = s.shallowCopy();
+      Sentence s = s0.shallowCopy();
       applyAdjectives(s);
       applyPrepositions(s);
       applyConjunctions(s);
@@ -187,6 +187,13 @@ class SentenceBundle {
         continue;
       }
       printBuffer.print();
+      if (parsed != null) {
+        print("\tOriginal breakdown: ${s0.toColoredString()}");
+      }
+      print("\tClauses:");
+      for (final clause in clauses) {
+        print("\t\t${clause.toColoredString()}");
+      }
       print("\t${s.toColoredString()} ${Fore.YELLOW}->${Fore.RESET} ${parsed ?? "${Fore.LIGHTMAGENTA_EX}NO TRANSLATION${Fore.RESET}"}");
     }
     print("first translation:");
