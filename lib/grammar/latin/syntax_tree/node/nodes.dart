@@ -32,7 +32,9 @@ export 'singletons.dart';
 
 SyntaxNode toSyntaxNode(Word word) {
   if (word is Verb && word.mood == Mood.ind) {
-    return V(word);
+    return V$s(word);
+  } else if (word is Adverb) {
+    return AdvP$s(word);
   } else if (word is Noun) {
     return NP$s(word);
   } else if (word is Adjective) {

@@ -63,6 +63,12 @@ void parse(Sentence sentence) {
       selector: NearestIndexTriSelector(targetIndex: 0),
       reducer: EtReducer()
     ),
+    const BiTransformer<V<dynamic>, AdvP<dynamic>, V$m>(
+      label: "Adverb Applicator", // todo ArbitraryPosition matcher after clause separation
+      matcher: OrderNeutralBiMatcher(),
+      selector: NearestIndexBiSelector(targetIndex: 0),
+      reducer: AdverbReducer(),
+    ),
     const VPTransformer(),
     const BiTransformer<NP<dynamic>, VP, S>(
       label: "Sentence Applicator",

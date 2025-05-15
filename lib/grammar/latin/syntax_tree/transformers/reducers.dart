@@ -40,6 +40,19 @@ class AdjectiveNounReducer implements BiReducer<NP<dynamic>, AdjP<dynamic>, NP$m
   }
 }
 
+class AdverbReducer implements BiReducer<V<dynamic>, AdvP<dynamic>, V$m> {
+  const AdverbReducer();
+
+  @override
+  V$m reduce(V<dynamic> a, AdvP<dynamic> b) {
+    if (a is V$m) {
+      return a.cloneWithModifier(b);
+    } else {
+      return V$m(a, [b]);
+    }
+  }
+}
+
 class SentenceReducer implements BiReducer<NP<dynamic>, VP, S> {
   const SentenceReducer();
 

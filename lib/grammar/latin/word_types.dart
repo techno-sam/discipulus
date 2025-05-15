@@ -21,3 +21,4 @@ export 'noun.dart' show Noun;
 export 'verb.dart' show Verb;
 export 'adjective.dart' show Adjective;
 export 'preposition.dart' show Preposition;
+export 'adverb.dart' show Adverb;
