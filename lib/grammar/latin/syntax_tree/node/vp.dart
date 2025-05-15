@@ -19,6 +19,7 @@
 import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/np.dart';
+import 'package:discipulus/grammar/latin/syntax_tree/node/pp.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
 
 class V implements SyntaxNode<V> {
@@ -53,9 +54,19 @@ class VP implements SyntaxNode<VP> {
   final V _v;
   final NP<dynamic>? _directObject;
   final NP<dynamic>? _indirectObject;
-  // TODO PP*
+  final List<PP> _prepositionalPhrases;
 
-  VP({required V verb, NP<dynamic>? directObject, NP<dynamic>? indirectObject}): _v = verb, _directObject = directObject, _indirectObject = indirectObject {
+  VP({
+    required V verb,
+    NP<dynamic>? directObject,
+    NP<dynamic>? indirectObject,
+    required List<PP> prepositionalPhrases,
+  })
+      : _v = verb,
+        _directObject = directObject,
+        _indirectObject = indirectObject,
+        _prepositionalPhrases = prepositionalPhrases
+  {
     if (directObject != null && directObject.caze != Case.acc) {
       throw ArgumentError.value(directObject.caze, "directObject.caze", "Direct Object must be accusative");
     }
@@ -75,11 +86,19 @@ class VP implements SyntaxNode<VP> {
     if (_indirectObject != null) {
       translation += " ${_indirectObject.translate(article: Article.definite)}";
     }
+    for (final pp in _prepositionalPhrases) {
+      translation += " ${pp.translate(article: Article.definite)}";
+    }
     return translation;
   }
 
   @override
-  VP shallowClone() => VP(verb: _v, directObject: _directObject, indirectObject: _indirectObject);
+  VP shallowClone() => VP(
+      verb: _v,
+      directObject: _directObject,
+      indirectObject: _indirectObject,
+      prepositionalPhrases: _prepositionalPhrases
+  );
 
   @override
   String getDebugLabel() => "VP -> ${translate()}";
@@ -89,5 +108,6 @@ class VP implements SyntaxNode<VP> {
     _v,
     if (_directObject != null) LiteralDebugNode("NP_dirObj", [_directObject]),
     if (_indirectObject != null) LiteralDebugNode("NP_indObj", [_indirectObject]),
+    ..._prepositionalPhrases
   ];
 }

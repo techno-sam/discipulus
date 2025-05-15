@@ -17,9 +17,13 @@
  */
 
 import 'package:discipulus/datatypes.dart';
+import 'package:discipulus/grammar/english/micro_translation.dart';
 import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
+
+import 'singletons.dart';
+import 'vp.dart';
 
 enum Article {
   indefinite("a"),
@@ -128,6 +132,8 @@ class NP$c implements NP<NP$c> {
     }
   }
 
+  static bool isValidTriple(NP<dynamic> a, Et _, NP<dynamic> b) => isValidPair(a, b);
+
   static bool isValidPair(NP<dynamic> a, NP<dynamic> b) => a.caze == b.caze;
 
   @override
@@ -150,7 +156,7 @@ class NP$c implements NP<NP$c> {
   NP$c shallowClone() => NP$c(_a, _b);
 
   @override
-  String getDebugLabel() => "NP_c -> ${translate(article: null)}";
+  String getDebugLabel() => "NP_c -> ${translate(article: Article.definite)}";
 
   @override
   Iterable<TreeDebugNode> getDebugChildren() => [_a, LiteralDebugNode("et"), _b];
@@ -192,7 +198,7 @@ class NP$m implements NP<NP$m> {
   @override
   String translate({required Article? article}) {
     String base = [
-      ..._adjectives.map((a) => a.translate(target: _noun)),
+      ..._adjectives.reversed.map((a) => a.translate(target: _noun)),
       _noun.translate(article: null)
     ].join(" ");
     return article?.applyTo(base) ?? base;
@@ -208,4 +214,39 @@ class NP$m implements NP<NP$m> {
 
   @override
   Iterable<TreeDebugNode> getDebugChildren() => [_noun, ..._adjectives];
+}
+
+class NP$implicitSubject implements NP<NP$implicitSubject> {
+  final Person _person;
+
+  const NP$implicitSubject(this._person);
+
+  factory NP$implicitSubject.fromVerb(VP vp) {
+    return NP$implicitSubject(vp.person);
+  }
+
+  @override
+  bool canBeModifiedBy(AdjP<dynamic> adj) => false;
+
+  @override
+  Case get caze => Case.nom;
+
+  @override
+  bool get plural => _person.plural;
+
+  @override
+  Gender get gender => Gender.x;
+
+  @override
+  NP$implicitSubject shallowClone() => NP$implicitSubject(_person);
+
+  @override
+  String getDebugLabel() => "NP_implicitSubject: $_person -> ${translate(article: null)}";
+
+  @override
+  Iterable<TreeDebugNode> getDebugChildren() => [];
+
+  @override
+  String translate({required Article? article}) =>
+      generatePronoun(_person, gender);
 }

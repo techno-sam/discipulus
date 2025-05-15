@@ -23,6 +23,10 @@ abstract interface class BiMatcher<A, B> {
   Iterable<Pair<Pair<int, A>, Pair<int, B>>> find(List<SyntaxNode<dynamic>> nodes);
 }
 
+abstract interface class TriMatcher<A, B, C> {
+  Iterable<Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>> find(List<SyntaxNode<dynamic>> nodes);
+}
+
 class OrderForwardBiMatcher<A, B> implements BiMatcher<A, B> {
   const OrderForwardBiMatcher();
 
@@ -33,6 +37,22 @@ class OrderForwardBiMatcher<A, B> implements BiMatcher<A, B> {
       final second = nodes[i + 1];
       if (first is A && second is B) {
         yield Pair(Pair(i, first as A), Pair(i + 1, second as B));
+      }
+    }
+  }
+}
+
+class OrderForwardTriMatcher<A, B, C> implements TriMatcher<A, B, C> {
+  const OrderForwardTriMatcher();
+
+  @override
+  Iterable<Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>> find(List<SyntaxNode<dynamic>> nodes) sync* {
+    for (int i = 0; i < nodes.length - 2; i++) {
+      final first = nodes[i];
+      final second = nodes[i + 1];
+      final third = nodes[i + 2];
+      if (first is A && second is B && third is C) {
+        yield Triple(Pair(i, first as A), Pair(i + 1, second as B), Pair(i + 2, third as C));
       }
     }
   }
@@ -88,6 +108,34 @@ class ArbitraryPositionBiMatcher<A, B> implements BiMatcher<A, B> {
   }
 }
 
+class FallbackABiMatcher<A, B> implements BiMatcher<A, B> {
+  final BiMatcher<A, B> _primary;
+  final A Function(B) _fallback;
+
+  const FallbackABiMatcher({
+    required BiMatcher<A, B> primary,
+    required A Function(B) fallback
+  }): _primary = primary, _fallback = fallback;
+
+  @override
+  Iterable<Pair<Pair<int, A>, Pair<int, B>>> find(List<SyntaxNode<dynamic>> nodes) sync* {
+    bool found = false;
+    for (final v in _primary.find(nodes)) {
+      found = true;
+      yield v;
+    }
+
+    if (!found) {
+      for (int i = 0; i < nodes.length; i++) {
+        final second = nodes[i];
+        if (second is! B) continue;
+        final A first = _fallback(second as B);
+        yield Pair(Pair(i, first), Pair(i, second as B));
+      }
+    }
+  }
+}
+
 class PredicateBiMatcher<A, B> implements BiMatcher<A, B> {
   final BiMatcher<A, B> _parent;
   final bool Function(A, B) _predicate;
@@ -99,5 +147,19 @@ class PredicateBiMatcher<A, B> implements BiMatcher<A, B> {
   @override
   Iterable<Pair<Pair<int, A>, Pair<int, B>>> find(List<SyntaxNode<dynamic>> nodes) {
     return _parent.find(nodes).where((p) => _predicate(p.first.second, p.second.second));
+  }
+}
+
+class PredicateTriMatcher<A, B, C> implements TriMatcher<A, B, C> {
+  final TriMatcher<A, B, C> _parent;
+  final bool Function(A, B, C) _predicate;
+
+  const PredicateTriMatcher({required TriMatcher<A, B, C> parent, required bool Function(A, B, C) predicate})
+      : _parent = parent,
+        _predicate = predicate;
+
+  @override
+  Iterable<Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>> find(List<SyntaxNode<dynamic>> nodes) {
+    return _parent.find(nodes).where((p) => _predicate(p.first.second, p.second.second, p.third.second));
   }
 }

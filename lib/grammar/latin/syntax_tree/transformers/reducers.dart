@@ -23,6 +23,10 @@ abstract interface class BiReducer<A, B, C extends SyntaxNode<C>> {
   C reduce(A a, B b);
 }
 
+abstract interface class TriReducer<A, B, C, D extends SyntaxNode<D>> {
+  D reduce(A a, B b, C c);
+}
+
 class AdjectiveNounReducer implements BiReducer<NP<dynamic>, AdjP<dynamic>, NP$m> {
   const AdjectiveNounReducer();
 
@@ -41,4 +45,18 @@ class SentenceReducer implements BiReducer<NP<dynamic>, VP, S> {
 
   @override
   S reduce(NP<dynamic> a, VP b) => S(subject: a, predicate: b);
+}
+
+class EtReducer implements TriReducer<NP<dynamic>, Et, NP<dynamic>, NP$c> {
+  const EtReducer();
+
+  @override
+  NP$c reduce(NP<dynamic> a, Et b, NP<dynamic> c) => NP$c(a, c);
+}
+
+class PrepositionReducer implements BiReducer<P, NP<dynamic>, PP> {
+  const PrepositionReducer();
+
+  @override
+  PP reduce(P a, NP<dynamic> b) => PP(a, b);
 }

@@ -22,6 +22,10 @@ abstract interface class BiSelector<A, B> {
   Pair<Pair<int, A>, Pair<int, B>>? select(Iterable<Pair<Pair<int, A>, Pair<int, B>>> pairs);
 }
 
+abstract interface class TriSelector<A, B, C> {
+  Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>? select(Iterable<Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>> triples);
+}
+
 class NearestIndexBiSelector<A, B> implements BiSelector<A, B> {
   final int _targetIndex;
 
@@ -37,11 +41,35 @@ class NearestIndexBiSelector<A, B> implements BiSelector<A, B> {
   }
 }
 
+class NearestIndexTriSelector<A, B, C> implements TriSelector<A, B, C> {
+  final int _targetIndex;
+
+  const NearestIndexTriSelector({required int targetIndex}): _targetIndex = targetIndex;
+
+  int _score(Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>> triple) {
+    return ((_targetIndex * 3) - (triple.first.first + triple.second.first + triple.third.first)).abs();
+  }
+
+  @override
+  Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>? select(Iterable<Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>> triples) {
+    return triples.isEmpty ? null : triples.minWith(_score);
+  }
+}
+
 class FirstBiSelector<A, B> implements BiSelector<A, B> {
   const FirstBiSelector();
 
   @override
   Pair<Pair<int, A>, Pair<int, B>>? select(Iterable<Pair<Pair<int, A>, Pair<int, B>>> pairs) {
-    return pairs.isEmpty ? null : pairs.first;
+    return pairs.firstOrNull;
+  }
+}
+
+class FirstTriSelector<A, B, C> implements TriSelector<A, B, C> {
+  const FirstTriSelector();
+
+  @override
+  Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>? select(Iterable<Triple<Pair<int, A>, Pair<int, B>, Pair<int, C>>> triples) {
+    return triples.firstOrNull;
   }
 }

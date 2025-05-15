@@ -55,7 +55,7 @@ class Preposition extends Word {
 
   @override
   String toString() {
-    return "Preposition[$word] $caze -> $primaryTranslation}";
+    return "Preposition[$word] $caze -> $primaryTranslation";
   }
 
   bool canPrepose(Noun noun) {

@@ -88,10 +88,22 @@ Sentence corneliaEtPueriRomaniTimidiGliresEduntInForo() {
   );
 }
 
+Sentence gliresEduntInForo() {
+  return Sentence(
+    original: "glires edunt in foro",
+    words: [
+      Noun.allTheParts(caze: Case.acc, plural: true, gender: Gender.m, parts: const Couple("glis", "gliris"), translations: [["dormouse"]]),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: true), mood: Mood.ind, principleParts: "edo, edere", translations: "eat", verbKind: VerbKind.trans),
+      Preposition(word: "in", caze: Case.abl, translations: [["in"]]),
+      Noun.allTheParts(caze: Case.abl, plural: false, gender: Gender.n, parts: const Couple("forum", "fori"), translations: [["market"]]),
+    ],
+  );
+}
+
 void main() {
   //debug.testMe();
 
-  final sentence = corneliaEtPueriRomaniTimidiGliresEdunt();
+  final sentence = gliresEduntInForo();
   //translateSentenceOld(sentence.original);
   parser.parse(sentence);
 }

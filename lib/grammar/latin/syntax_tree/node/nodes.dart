@@ -20,10 +20,12 @@ import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
 import 'np.dart';
+import 'pp.dart';
 import 'vp.dart';
 import 'singletons.dart';
 
 export 'np.dart';
+export 'pp.dart';
 export 'vp.dart';
 export 's.dart';
 export 'singletons.dart';
@@ -37,6 +39,8 @@ SyntaxNode toSyntaxNode(Word word) {
     return AdjP$s(word);
   } else if (word is Conjunction && word.isEt) {
     return const Et();
+  } else if (word is Preposition) {
+    return P(word);
   } else {
     throw ArgumentError.value(
         word, "word",

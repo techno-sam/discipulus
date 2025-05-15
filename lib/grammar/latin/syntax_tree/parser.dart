@@ -45,12 +45,33 @@ void parse(Sentence sentence) {
       selector: NearestIndexBiSelector(targetIndex: 0),
       reducer: AdjectiveNounReducer(),
     ),
+    const BiTransformer<P, NP<dynamic>, PP>(
+      label: "Preposition Applicator",
+      matcher: PredicateBiMatcher(
+        parent: OrderForwardBiMatcher(),
+        predicate: PP.isValidPair,
+      ),
+      selector: NearestIndexBiSelector(targetIndex: 0),
+      reducer: PrepositionReducer(),
+    ),
+    const TriTransformer<NP<dynamic>, Et, NP<dynamic>, NP$c>(
+      label: "Conjunction Applicator",
+      matcher: PredicateTriMatcher(
+        parent: OrderForwardTriMatcher(),
+        predicate: NP$c.isValidTriple,
+      ),
+      selector: NearestIndexTriSelector(targetIndex: 0),
+      reducer: EtReducer()
+    ),
     const VPTransformer(),
     const BiTransformer<NP<dynamic>, VP, S>(
       label: "Sentence Applicator",
-      matcher: PredicateBiMatcher(
-        parent: ArbitraryPositionBiMatcher(),
-        predicate: S.isValidPair,
+      matcher: FallbackABiMatcher(
+        primary: PredicateBiMatcher(
+          parent: ArbitraryPositionBiMatcher(),
+          predicate: S.isValidPair,
+        ),
+        fallback: NP$implicitSubject.fromVerb
       ),
       selector: FirstBiSelector(),
       reducer: SentenceReducer(),
