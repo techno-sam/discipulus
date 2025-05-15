@@ -189,10 +189,7 @@ class SentenceBundle {
       printBuffer.print();
       if (parsed != null) {
         print("\tOriginal breakdown: ${s0.toColoredString()}");
-      } /*
-      else {
-        continue;
-      }// */
+      }
       print("\tClauses:");
       for (final clause in clauses) {
         print("\t\t${clause.toColoredString()}");

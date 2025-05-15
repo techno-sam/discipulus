@@ -18,6 +18,7 @@
 
 import 'dart:math' as math;
 
+import 'package:discipulus/grammar/english/micro_translation.dart' show pluralizeNoun;
 import 'package:discipulus/utils/colors.dart';
 
 class Triple<A, B, C> {
@@ -421,5 +422,11 @@ extension StableSort<E> on List<E> {
     for (var i = 0; i < length; i++) {
       this[i] = tmp[i][0];
     }
+  }
+}
+
+extension PluralLabeledInt on int {
+  String labeled(String label) {
+    return "$this ${pluralizeNoun(label, this != 1)}";
   }
 }
