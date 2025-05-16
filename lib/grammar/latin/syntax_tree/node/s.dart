@@ -24,7 +24,7 @@ class S implements SyntaxNode<S> {
   final NP<dynamic> _subject;
   final VP _predicate;
 
-  S({required NP<dynamic> subject, required VP predicate})
+  S({required NP<dynamic> subject, required VP predicate, Sbar? sbar})
       : _subject = subject,
         _predicate = predicate
   {
@@ -36,12 +36,16 @@ class S implements SyntaxNode<S> {
     }
   }
 
+  NP<dynamic> get subject => _subject;
+
   static bool isValidPair(NP<dynamic> subject, VP predicate) =>
       subject.caze == Case.nom && subject.plural == predicate.person.plural;
 
-  String translate() {
-    final subjectTranslation = _subject.translate(article: Article.definite);
-    final predicateTranslation = _predicate.translate();
+  String translate(List<S>? parents) {
+    parents = [this, if (parents != null) ...parents];
+
+    final subjectTranslation = _subject.translate(article: Article.definite, parents: parents);
+    final predicateTranslation = _predicate.translate(parents);
     return "$subjectTranslation $predicateTranslation";
   }
 
@@ -49,7 +53,7 @@ class S implements SyntaxNode<S> {
   S shallowClone() => S(subject: _subject, predicate: _predicate);
 
   @override
-  String getDebugLabel() => "S -> ${translate()}";
+  String getDebugLabel() => "S -> ${translate(null)}";
 
   @override
   Iterable<TreeDebugNode> getDebugChildren() => [_subject, _predicate];

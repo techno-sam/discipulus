@@ -20,7 +20,10 @@ import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/np.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/pp.dart';
+import 'package:discipulus/grammar/latin/syntax_tree/node/sbar.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
+
+import 's.dart';
 
 typedef AdverbConsumer = void Function(String);
 
@@ -169,17 +172,20 @@ class VP implements SyntaxNode<VP> {
   final NP<dynamic>? _directObject;
   final NP<dynamic>? _indirectObject;
   final List<PP> _prepositionalPhrases;
+  final Sbar? _sbar;
 
   VP({
     required V<dynamic> verb,
     NP<dynamic>? directObject,
     NP<dynamic>? indirectObject,
     required List<PP> prepositionalPhrases,
+    Sbar? sbar
   })
       : _v = verb,
         _directObject = directObject,
         _indirectObject = indirectObject,
-        _prepositionalPhrases = prepositionalPhrases
+        _prepositionalPhrases = prepositionalPhrases,
+        _sbar = sbar
   {
     if (directObject != null && directObject.caze != Case.acc) {
       throw ArgumentError.value(directObject.caze, "directObject.caze", "Direct Object must be accusative");
@@ -192,7 +198,7 @@ class VP implements SyntaxNode<VP> {
   Tense get tense => _v.tense;
   Person get person => _v.person;
 
-  String translate() {
+  String translate(List<S>? parents) {
     String adverbPart = "";
     void adverbConsumer(String advP) {
       adverbPart = advP;
@@ -211,6 +217,9 @@ class VP implements SyntaxNode<VP> {
     for (final pp in _prepositionalPhrases) {
       translation += " ${pp.translate(article: Article.definite)}";
     }
+    if (_sbar != null) {
+      translation += " ${_sbar.translate(parents)}";
+    }
     return translation;
   }
 
@@ -223,13 +232,14 @@ class VP implements SyntaxNode<VP> {
   );
 
   @override
-  String getDebugLabel() => "VP -> ${translate()}";
+  String getDebugLabel() => "VP -> ${translate(null)}";
 
   @override
   Iterable<TreeDebugNode> getDebugChildren() => [
     _v,
     if (_directObject != null) LiteralDebugNode("NP_dirObj", [_directObject]),
     if (_indirectObject != null) LiteralDebugNode("NP_indObj", [_indirectObject]),
-    ..._prepositionalPhrases
+    ..._prepositionalPhrases,
+    if (_sbar != null) _sbar
   ];
 }

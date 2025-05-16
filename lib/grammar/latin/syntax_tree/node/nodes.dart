@@ -22,15 +22,15 @@ import 'package:discipulus/grammar/latin/word_types.dart';
 import 'np.dart';
 import 'pp.dart';
 import 'vp.dart';
-import 'singletons.dart';
+import 'sbar.dart';
 
 export 'np.dart';
 export 'pp.dart';
 export 'vp.dart';
 export 's.dart';
-export 'singletons.dart';
+export 'sbar.dart';
 
-SyntaxNode toSyntaxNode(Word word) {
+SyntaxNode<dynamic> toSyntaxNode(Word word) {
   if (word is Verb && word.mood == Mood.ind) {
     return V$s(word);
   } else if (word is Adverb) {
@@ -39,8 +39,12 @@ SyntaxNode toSyntaxNode(Word word) {
     return NP$s(word);
   } else if (word is Adjective) {
     return AdjP$s(word);
-  } else if (word is Conjunction && word.isEt) {
-    return const Et();
+  } else if (word is Conjunction) {
+    if (word.isEt) {
+      return const Et();
+    } else {
+      return Conj$s(word);
+    }
   } else if (word is Preposition) {
     return P(word);
   } else {

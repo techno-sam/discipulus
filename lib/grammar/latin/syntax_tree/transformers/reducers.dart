@@ -73,3 +73,10 @@ class PrepositionReducer implements BiReducer<P, NP<dynamic>, PP> {
   @override
   PP reduce(P a, NP<dynamic> b) => PP(a, b);
 }
+
+class SbarReducer implements BiReducer<Conj<dynamic>, S, Sbar> {
+  const SbarReducer();
+
+  @override
+  Sbar reduce(Conj<dynamic> a, S b) => Sbar(a, b);
+}

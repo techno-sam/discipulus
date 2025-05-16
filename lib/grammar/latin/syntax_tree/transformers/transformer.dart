@@ -19,6 +19,7 @@
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
+import 'package:discipulus/grammar/latin/syntax_tree/clause_unit.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/nodes.dart';
 import 'matchers.dart';
 import 'selectors.dart';
@@ -51,9 +52,9 @@ abstract class Transformer {
 
   String get label;
 
-  bool transformOnce(List<SyntaxNode<dynamic>> nodes);
-  void transformAll(List<SyntaxNode<dynamic>> nodes) {
-    while (transformOnce(nodes)) {}
+  bool transformOnce(ClauseUnit clauseUnit);
+  void transformAll(ClauseUnit clauseUnit) {
+    while (transformOnce(clauseUnit)) {}
   }
 }
 
@@ -78,7 +79,8 @@ class BiTransformer<A extends SyntaxNode<dynamic>, B extends SyntaxNode<dynamic>
   String get label => _label;
 
   @override
-  bool transformOnce(List<SyntaxNode<dynamic>> nodes) {
+  bool transformOnce(ClauseUnit clauseUnit) {
+    final List<SyntaxNode<dynamic>> nodes = clauseUnit.nodes;
     final matched = _matcher.find(nodes);
     if (matched.isEmpty) {
       return false;
@@ -126,7 +128,8 @@ class TriTransformer<A extends SyntaxNode<dynamic>, B extends SyntaxNode<dynamic
   String get label => _label;
 
   @override
-  bool transformOnce(List<SyntaxNode<dynamic>> nodes) {
+  bool transformOnce(ClauseUnit clauseUnit) {
+    final List<SyntaxNode<dynamic>> nodes = clauseUnit.nodes;
     final matched = _matcher.find(nodes);
     if (matched.isEmpty) {
       return false;
@@ -164,7 +167,8 @@ class VPTransformer extends Transformer {
   String get label => "VP Collector";
 
   @override
-  bool transformOnce(List<SyntaxNode<dynamic>> nodes) {
+  bool transformOnce(ClauseUnit clauseUnit) {
+    final List<SyntaxNode<dynamic>> nodes = clauseUnit.nodes;
     final verb = nodes.enumerate
         .whereSecondType<V>()
         .firstOrNull;
@@ -188,19 +192,116 @@ class VPTransformer extends Transformer {
         .whereSecondType<PP>()
         .toList();
 
+    final sbar = nodes.enumerate
+        .whereSecondType<ClauseUnit>()
+        .map((p) {
+          if (p.second.nodes.length != 1) return null;
+          final node = p.second.nodes[0];
+          if (node is! Sbar) return null;
+          return Pair(p.first, node);
+        })
+        .where((p) => p != null)
+        .firstOrNull;
+
     final vp = VP(
       verb: verb.second,
       directObject: dirObj?.second,
       indirectObject: indObj?.second,
-      prepositionalPhrases: prepositionalPhrases.map((p) => p.second).toList()
+      prepositionalPhrases: prepositionalPhrases.map((p) => p.second).toList(),
+      sbar: sbar?.second
     );
 
     _replace(nodes: nodes, primary: verb, result: vp, secondary: [
       if (dirObj != null) dirObj,
       if (indObj != null) indObj,
-      ...prepositionalPhrases
+      ...prepositionalPhrases,
+      if (sbar != null) sbar,
     ]);
 
     return true;
+  }
+}
+
+class ClauseUnitSplitTransformer extends Transformer {
+  const ClauseUnitSplitTransformer();
+
+  @override
+  String get label => "Clause Unit Splitter";
+
+  @override
+  bool transformOnce(final ClauseUnit clauseUnit) {
+    final List<Pair<int, Conj<dynamic>>> conjunctions = clauseUnit.nodes.enumerate
+        .whereSecondType<Conj>()
+        .toList();
+
+    if (conjunctions.isEmpty) {
+      return false;
+    }
+
+    // [start, end)
+    final List<Pair<int, int>> ranges = [Pair(0, conjunctions[0].first)];
+
+    for (int i = 0; i < conjunctions.length - 1; i++) {
+      ranges.add(Pair(conjunctions[i].first, conjunctions[i + 1].first));
+    }
+
+    ranges.add(Pair(conjunctions.last.first, clauseUnit.nodes.length));
+
+    final List<SyntaxNode<dynamic>> nodes = clauseUnit.nodes;
+    clauseUnit.nodes = nodes.sublist(ranges[0].first, ranges[0].second);
+
+    ClauseUnit parent = clauseUnit;
+    for (int i = 1; i < ranges.length; i++) {
+      final ClauseUnit newClauseUnit = ClauseUnit(
+        nodes.sublist(ranges[i].first, ranges[i].second),
+        parent: parent
+      );
+
+      parent.nodes.add(newClauseUnit);
+      parent = newClauseUnit;
+    }
+
+    return true;
+  }
+}
+
+class SequentialTransformer extends Transformer {
+  final String _label;
+  final List<Transformer> _children;
+  final void Function(String, ClauseUnit)? _onTransform;
+
+  const SequentialTransformer({
+    required String label,
+    required List<Transformer> children,
+    void Function(String, ClauseUnit)? onTransform
+  }): _label = label, _children = children, _onTransform = onTransform;
+
+  @override
+  String get label => _label;
+
+  @override
+  bool transformOnce(ClauseUnit clauseUnit) {
+    bool any = false;
+    for (final transformer in _children) {
+      if (transformer.transformOnce(clauseUnit)) {
+        any = true;
+      }
+      if (_onTransform != null) {
+        _onTransform(transformer.label, clauseUnit);
+      }
+    }
+    return any;
+  }
+
+  @override
+  void transformAll(ClauseUnit clauseUnit) {
+    if (_onTransform != null) {
+      print("\tStarting group transform for clause unit of length ${clauseUnit.nodes.length}\n");
+    }
+    for (final transformer in _children) {
+      if (transformer.transformOnce(clauseUnit) && _onTransform != null) {
+        _onTransform(transformer.label, clauseUnit);
+      }
+    }
   }
 }

@@ -157,6 +157,31 @@ Sentence gliresEduntInForo() {
   );
 }
 
+Sentence corneliaSedetEtFlaviaLegit() {
+  return Sentence(
+    original: "Cornelia sedet et Flavia legit",
+    words: [
+      Noun.allTheParts(caze: Case.nom, plural: false, gender: Gender.f, parts: const Couple("Cornelia", "Corneliae"), translations: [["Cornelia"]], isProper: true),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "sedeo, sedere", translations: "sit", verbKind: VerbKind.intrans),
+      Conjunction(word: "et", translations: [["and"]]),
+      Noun.allTheParts(caze: Case.nom, plural: false, gender: Gender.f, parts: const Couple("Flavia", "Flaviae"), translations: [["Flavia"]], isProper: true),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "lego, legere", translations: "read", verbKind: VerbKind.trans),
+    ],
+  );
+}
+
+Sentence corneliaSedetEtLegit() {
+  return Sentence(
+    original: "Cornelia sedet et legit",
+    words: [
+      Noun.allTheParts(caze: Case.nom, plural: false, gender: Gender.f, parts: const Couple("Cornelia", "Corneliae"), translations: [["Cornelia"]], isProper: true),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "sedeo, sedere", translations: "sit", verbKind: VerbKind.intrans),
+      Conjunction(word: "et", translations: [["and"]]),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "lego, legere", translations: "read", verbKind: VerbKind.trans),
+    ],
+  );
+}
+
 Sentence indexedBundle(String sentence, int index) {
   final bundle = SentenceBundle.fromSentence(sentence, debugMode: true);
   return bundle.allPossibleSentences()[index];
@@ -165,7 +190,7 @@ Sentence indexedBundle(String sentence, int index) {
 void main() {
   //debug.testMe();
 
-  final sentence = indexedBundle("Marcus et ego celeriter ambulant ad hortum cum Cornelia", 2);
+  final sentence = corneliaSedetEtLegit();//indexedBundle("Marcus et ego celeriter ambulant ad hortum cum Cornelia", 2);
   //translateSentenceOld(sentence.original);
   parser.parse(sentence);
 }

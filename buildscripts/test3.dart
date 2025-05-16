@@ -23,14 +23,15 @@ import 'package:discipulus/grammar/latin/syntax_tree/node/nodes.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/parser.dart' as parser;
 
 void main() {
-  const raw = "Marcus et ego celeriter ambulant ad hortum cum Cornelia";
+  const raw = "Cornelia iam sub arbore sedet cum Flavia et legit";
   final bundle = SentenceBundle.fromSentence(raw, debugMode: true);
 
   print("\n\nTranslating: $raw");
 
   for (final pair in bundle.allPossibleSentences().enumerate) {
     final sentence = pair.second;
-    final nodes = parser.parse(sentence, showIntermediate: false);
+    final clauseUnit = parser.parse(sentence, showIntermediate: false);
+    final nodes = clauseUnit.nodes;
 
     if (nodes.length == 1 && nodes[0] is S) {
       print("\nSentence idx ${pair.first}:");

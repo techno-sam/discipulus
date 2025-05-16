@@ -21,4 +21,5 @@ export 'noun.dart' show Noun;
 export 'verb.dart' show Verb;
 export 'adjective.dart' show Adjective;
 export 'preposition.dart' show Preposition;
+export 'conjunction.dart' show Conjunction;
 export 'adverb.dart' show Adverb;

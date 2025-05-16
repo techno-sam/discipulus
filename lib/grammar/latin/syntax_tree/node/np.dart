@@ -22,7 +22,8 @@ import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
 
-import 'singletons.dart';
+import 's.dart' as s;
+import 'sbar.dart';
 import 'vp.dart';
 
 enum Article {
@@ -42,7 +43,7 @@ abstract interface class NP<S extends NP<S>> implements SyntaxNode<S> {
   Gender get gender;
 
   bool canBeModifiedBy(AdjP<dynamic> adj);
-  String translate({required Article? article});
+  String translate({required Article? article, List<s.S>? parents});
 }
 
 abstract interface class AdjP<S extends AdjP<S>> implements SyntaxNode<S> {
@@ -76,7 +77,7 @@ class NP$s implements NP<NP$s> {
   }
 
   @override
-  String translate({required Article? article}) {
+  String translate({required Article? article, List<s.S>? parents}) {
     if (_noun.isProper) article = null;
     return article?.applyTo(_noun.primaryTranslation) ?? _noun.primaryTranslation;
   }
@@ -149,8 +150,8 @@ class NP$c implements NP<NP$c> {
   bool canBeModifiedBy(AdjP<dynamic> adj) => false;
 
   @override
-  String translate({required Article? article}) =>
-      "${_a.translate(article: article)} and ${_b.translate(article: article)}";
+  String translate({required Article? article, List<s.S>? parents}) =>
+      "${_a.translate(article: article, parents: parents)} and ${_b.translate(article: article, parents: parents)}";
 
   @override
   NP$c shallowClone() => NP$c(_a, _b);
@@ -196,10 +197,10 @@ class NP$m implements NP<NP$m> {
   bool canBeModifiedBy(AdjP<dynamic> adj) => _noun.canBeModifiedBy(adj);
 
   @override
-  String translate({required Article? article}) {
+  String translate({required Article? article, List<s.S>? parents}) {
     String base = [
       ..._adjectives.reversed.map((a) => a.translate(target: _noun)),
-      _noun.translate(article: null)
+      _noun.translate(article: null, parents: parents)
     ].join(" ");
     return article?.applyTo(base) ?? base;
   }
@@ -247,6 +248,16 @@ class NP$implicitSubject implements NP<NP$implicitSubject> {
   Iterable<TreeDebugNode> getDebugChildren() => [];
 
   @override
-  String translate({required Article? article}) =>
-      generatePronoun(_person, gender);
+  String translate({required Article? article, List<s.S>? parents}) {
+    Gender? parentGender = parents?.sublist(1)
+        .where((s) => s.subject is! NP$implicitSubject && s.subject.plural == plural)
+        .map((s) => s.subject.gender)
+        .firstOrNull;
+
+    final $gender = parentGender == null
+        ? gender
+        : gender.makeMoreSpecific(parentGender) ?? gender;
+
+    return generatePronoun(_person, $gender);
+  }
 }

@@ -77,6 +77,12 @@ enum Gender {
         || (other == c && (this == m || this == f));
   }
 
+  Gender? makeMoreSpecific(Gender other) {
+    if (this == x) return other;
+    if (this == c && (other == m || other == f)) return other;
+    return null;
+  }
+
   final String description;
   const Gender(this.description);
 

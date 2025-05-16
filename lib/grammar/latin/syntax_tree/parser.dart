@@ -19,21 +19,23 @@
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
+import 'package:discipulus/grammar/latin/syntax_tree/clause_unit.dart';
 import 'node/nodes.dart';
 import 'transformers/transformer.dart';
 
-void _dbg(List<SyntaxNode> nodes, [String indent = ""]) {
-  print("${nodes.length.labeled("node")}:");
+void _dbg(ClauseUnit clauseUnit, [String indent = "", String indent0 = ""]) {
+  final nodes = clauseUnit.nodes;
+  print("$indent0${nodes.length.labeled("node")}:");
   for (final node in nodes) {
     print(indent+TreeDebugNode.getDebugLines(node).join("\n$indent"));
   }
 }
 
-List<SyntaxNode> parse(Sentence sentence, {bool showIntermediate = true}) {
-  List<SyntaxNode> nodes = sentence.words.map(toSyntaxNode).toList();
+ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
+  ClauseUnit clauseUnit = ClauseUnit(sentence.words.map(toSyntaxNode).toList());
 
   if (showIntermediate) {
-    _dbg(nodes, "\t");
+    _dbg(clauseUnit, "\t");
     print("\nTransforming...\n");
   }
 
@@ -66,33 +68,58 @@ List<SyntaxNode> parse(Sentence sentence, {bool showIntermediate = true}) {
       reducer: EtReducer()
     ),
     const BiTransformer<V<dynamic>, AdvP<dynamic>, V$m>(
-      label: "Adverb Applicator", // todo ArbitraryPosition matcher after clause separation
+      label: "Adverb Applicator (Adjacent)",
       matcher: OrderNeutralBiMatcher(),
       selector: NearestIndexBiSelector(targetIndex: 0),
       reducer: AdverbReducer(),
     ),
-    const VPTransformer(),
-    const BiTransformer<NP<dynamic>, VP, S>(
-      label: "Sentence Applicator",
-      matcher: FallbackABiMatcher(
-        primary: PredicateBiMatcher(
-          parent: ArbitraryPositionBiMatcher(),
-          predicate: S.isValidPair,
-        ),
-        fallback: NP$implicitSubject.fromVerb
-      ),
-      selector: FirstBiSelector(),
-      reducer: SentenceReducer(),
+    const ClauseUnitSplitTransformer(),
+    const BiTransformer<V<dynamic>, AdvP<dynamic>, V$m>(
+      label: "Adverb Applicator (Arbitrary Positions)",
+      matcher: ArbitraryPositionBiMatcher(),
+      selector: NearestIndexBiSelector(targetIndex: 0),
+      reducer: AdverbReducer(),
+    ),
+    SequentialTransformer(
+        label: "Clause Builder",
+        onTransform: showIntermediate ? (label, clauseUnit) {
+          print("\t$label:");
+          _dbg(clauseUnit, "\t\t", "\t");
+          print("");
+        } : null,
+        children: const [
+          VPTransformer(),
+          BiTransformer<NP<dynamic>, VP, S>(
+            label: "Sentence Applicator",
+            matcher: FallbackABiMatcher(
+                primary: PredicateBiMatcher(
+                  parent: ArbitraryPositionBiMatcher(),
+                  predicate: S.isValidPair,
+                ),
+                fallback: NP$implicitSubject.fromVerb
+            ),
+            selector: FirstBiSelector(),
+            reducer: SentenceReducer(),
+          ),
+          BiTransformer<Conj<dynamic>, S, Sbar>(
+            label: "Conjunction Applicator",
+            matcher: OrderForwardBiMatcher(),
+            selector: NearestIndexBiSelector(targetIndex: 0),
+            reducer: SbarReducer(),
+          ),
+        ]
     ),
   ];
 
   for (final transformer in transformers) {
-    transformer.transformAll(nodes);
     if (showIntermediate) {
       print("\n${transformer.label}:");
-      _dbg(nodes, "\t");
+    }
+    clauseUnit.applyToSelfAndChildren(transformer.transformAll);
+    if (showIntermediate) {
+      _dbg(clauseUnit, "\t");
     }
   }
 
-  return nodes;
+  return clauseUnit;
 }
