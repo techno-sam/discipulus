@@ -62,7 +62,7 @@ class V$s implements V<V$s> {
   String translate({bool suppress3S = false, AdverbConsumer? adverbConsumer}) => person.person == 3
       && !person.plural
       && !suppress3S
-      ? "${_verb.primaryTranslation}s"
+      ? _verb.primary3SingTranslation
       : _verb.primaryTranslation;
 
   @override
@@ -218,7 +218,7 @@ class VP implements SyntaxNode<VP> {
       translation += " ${pp.translate(article: Article.definite)}";
     }
     if (_sbar != null) {
-      translation += " ${_sbar.translate(parents)}";
+      translation += ", ${_sbar.translate(parents)}";
     }
     return translation;
   }

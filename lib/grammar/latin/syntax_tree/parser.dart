@@ -74,6 +74,7 @@ ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
       reducer: AdverbReducer(),
     ),
     const ClauseUnitSplitTransformer(),
+    const RelClauseSplitTransformer(),
     const BiTransformer<V<dynamic>, AdvP<dynamic>, V$m>(
       label: "Adverb Applicator (Arbitrary Positions)",
       matcher: ArbitraryPositionBiMatcher(),
@@ -88,6 +89,16 @@ ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
           print("");
         } : null,
         children: const [
+          RelClauseUnpackTransformer(),
+          BiTransformer<NP<dynamic>, RelClause, NP$r>(
+            label: "Relative Clause Applicator",
+            matcher: PredicateBiMatcher(
+              parent: OrderForwardBiMatcher(),
+              predicate: NP$r.isValidPair,
+            ),
+            selector: NearestIndexBiSelector(targetIndex: 0),
+            reducer: NounRelClauseReducer(),
+          ),
           VPTransformer(),
           BiTransformer<NP<dynamic>, VP, S>(
             label: "Sentence Applicator",
@@ -106,6 +117,15 @@ ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
             matcher: OrderForwardBiMatcher(),
             selector: NearestIndexBiSelector(targetIndex: 0),
             reducer: SbarReducer(),
+          ),
+          BiTransformer<Rel, S, RelClause>(
+            label: "Relative Pronoun Applicator",
+            matcher: PredicateBiMatcher(
+              parent: OrderForwardBiMatcher(),
+              predicate: RelClause.isValidPair,
+            ),
+            selector: NearestIndexBiSelector(targetIndex: 0),
+            reducer: RelClauseReducer(),
           ),
         ]
     ),

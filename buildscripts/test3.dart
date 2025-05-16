@@ -23,7 +23,9 @@ import 'package:discipulus/grammar/latin/syntax_tree/node/nodes.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/parser.dart' as parser;
 
 void main() {
-  const raw = "Sextus dat glirem puellae Romanae";
+  // "Cornelia quae cotidie ambulat edit glirem quod famem habet"
+  // "Sextus qui cotidie celerrime ambulat dat glirem puellae Romanae"
+  const raw = "Cornelia quae cotidie ambulat edit glirem quod famem habet et legit libros";
   final bundle = SentenceBundle.fromSentence(raw, debugMode: true);
 
   print("\n\nTranslating: $raw");
@@ -37,5 +39,7 @@ void main() {
       print("\nSentence idx ${pair.first}:");
       print(TreeDebugNode.getDebugLines(nodes[0]).join("\n"));
     }
+    /*print("\nSentence idx ${pair.first}:");
+    print(TreeDebugNode.getDebugLines(clauseUnit).join("\n"));*/
   }
 }

@@ -20,7 +20,6 @@ import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
 
 import 's.dart';
-import 'vp.dart';
 
 abstract interface class Conj<S extends Conj<S>> implements SyntaxNode<S> {
   String translate();

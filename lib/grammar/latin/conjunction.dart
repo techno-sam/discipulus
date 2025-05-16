@@ -87,6 +87,9 @@ class CompoundNoun implements Noun {
   bool get isProper => true;
 
   @override
+  bool get isPronoun => false;
+
+  @override
   Noun? modify(Adjective adjective) {
     return null;
   }

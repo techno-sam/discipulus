@@ -225,6 +225,12 @@ List<Word> parseToPOS(List<Line> lines, {void Function(String) print = _printBac
           }
           mode = _Mode.none;
           bits = [];
+        } else if (line is L03Common) {
+          for (final L01Pronoun bit in bits) {
+            out.add(Noun.pronounLines(line01: bit, line02: null, line03: line));
+          }
+          mode = _Mode.none;
+          bits = [];
         } else {
           print("Failed to handle line: $line");
         }

@@ -265,6 +265,82 @@ class ClauseUnitSplitTransformer extends Transformer {
   }
 }
 
+class RelClauseSplitTransformer extends Transformer {
+  const RelClauseSplitTransformer();
+
+  @override
+  String get label => "Relative Clause Unit Splitter";
+
+  @override
+  bool transformOnce(final ClauseUnit clauseUnit) {
+    final List<Pair<int, Rel>> relativePronouns = clauseUnit.nodes.enumerate
+        .whereSecondType<Rel>()
+        .toList();
+
+    if (relativePronouns.isEmpty) {
+      return false;
+    }
+
+    // [start, end)
+    final List<Pair<int, int>> splitRanges = [];
+
+    for (final pair in relativePronouns) {
+      for (int i = pair.first + 1; i < clauseUnit.nodes.length; i++) {
+        final node = clauseUnit.nodes[i];
+        if (node is V) {
+          splitRanges.add(Pair(pair.first, i+1));
+          break;
+        }
+      }
+    }
+
+    // Sort last-to-first so we can safely remove without exploding things
+    splitRanges.sort((a, b) => -a.first.compareTo(b.first));
+
+    for (final splitRange in splitRanges) {
+      final ClauseUnit child = ClauseUnit(
+        clauseUnit.nodes.sublist(splitRange.first, splitRange.second),
+        parent: clauseUnit
+      );
+      clauseUnit.nodes[splitRange.first] = child;
+
+      for (int i = splitRange.second - 1; i > splitRange.first; i--) {
+        clauseUnit.nodes.removeAt(i);
+      }
+    }
+
+    return true;
+  }
+}
+
+class RelClauseUnpackTransformer extends Transformer {
+  const RelClauseUnpackTransformer();
+
+  @override
+  String get label => "Relative Clause Unpacker";
+
+  @override
+  bool transformOnce(ClauseUnit clauseUnit) {
+    final relClause = clauseUnit.nodes.enumerate
+        .whereSecondType<ClauseUnit>()
+        .map((p) {
+          if (p.second.nodes.length != 1) return null;
+          final node = p.second.nodes[0];
+          if (node is! RelClause) return null;
+          return Pair(p.first, node);
+        })
+        .where((p) => p != null)
+        .firstOrNull;
+
+    if (relClause != null) {
+      clauseUnit.nodes[relClause.first] = relClause.second;
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
+
 class SequentialTransformer extends Transformer {
   final String _label;
   final List<Transformer> _children;

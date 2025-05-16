@@ -16,6 +16,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/grammar/english/micro_translation.dart' show makeVerb3S;
 import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/utils/colors.dart';
 
@@ -179,7 +180,7 @@ class Verb extends Word {
     _translations = line03.translations;
   }
 
-  String get primary3SingTranslation => "${primaryTranslation}s";
+  String get primary3SingTranslation => makeVerb3S(primaryTranslation);
 
   @override
   String toString() {

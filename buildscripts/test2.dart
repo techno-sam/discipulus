@@ -182,6 +182,34 @@ Sentence corneliaSedetEtLegit() {
   );
 }
 
+Sentence corneliaEditGliremQuemAmbulatCotidie() {
+  return Sentence(
+    original: "Cornelia edit glirem quem ambulat cotidie",
+    words: [
+      Noun.allTheParts(caze: Case.nom, plural: false, gender: Gender.f, parts: const Couple("Cornelia", "Corneliae"), translations: [["Cornelia"]], isProper: true),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "edo, edere", translations: "eat", verbKind: VerbKind.trans),
+      Noun.allTheParts(caze: Case.acc, plural: false, gender: Gender.m, parts: const Couple("glis", "gliris"), translations: [["dormouse"]]),
+      Noun.allTheParts(caze: Case.acc, plural: false, gender: Gender.m, parts: const Couple("quem", "quem"), translations: [["who"]], isProper: true, isPronoun: true),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "ambulo, ambulare", translations: "walk", verbKind: VerbKind.intrans),
+      Adverb(word: "cotidie", comparisonType: ComparisonType.pos, parts: ["cotidie"], translations: [["daily"]]),
+    ],
+  );
+}
+
+Sentence corneliaQuaeCotidieAmbulatEditGlirem() {
+  return Sentence(
+    original: "Cornelia quae cotidie ambulat edit glirem",
+    words: [
+      Noun.allTheParts(caze: Case.nom, plural: false, gender: Gender.f, parts: const Couple("Cornelia", "Corneliae"), translations: [["Cornelia"]], isProper: true),
+      Noun.allTheParts(caze: Case.nom, plural: false, gender: Gender.f, parts: const Couple("quae", "quae"), translations: [["who"]], isProper: true, isPronoun: true),
+      Adverb(word: "cotidie", comparisonType: ComparisonType.pos, parts: ["cotidie"], translations: [["daily"]]),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "ambulo, ambulare", translations: "walk", verbKind: VerbKind.intrans),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: false), mood: Mood.ind, principleParts: "edo, edere", translations: "eat", verbKind: VerbKind.trans),
+      Noun.allTheParts(caze: Case.acc, plural: false, gender: Gender.m, parts: const Couple("glis", "gliris"), translations: [["dormouse"]]),
+    ],
+  );
+}
+
 Sentence indexedBundle(String sentence, int index) {
   final bundle = SentenceBundle.fromSentence(sentence, debugMode: true);
   return bundle.allPossibleSentences()[index];
@@ -190,7 +218,7 @@ Sentence indexedBundle(String sentence, int index) {
 void main() {
   //debug.testMe();
 
-  final sentence = corneliaSedetEtLegit();//indexedBundle("Marcus et ego celeriter ambulant ad hortum cum Cornelia", 2);
+  final sentence = indexedBundle("Cornelia quae cotidie ambulat edit glirem quod famem habet", 26);//corneliaQuaeCotidieAmbulatEditGlirem();//indexedBundle("Marcus et ego celeriter ambulant ad hortum cum Cornelia", 2);
   //translateSentenceOld(sentence.original);
   parser.parse(sentence);
 }

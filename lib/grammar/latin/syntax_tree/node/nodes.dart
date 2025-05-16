@@ -23,12 +23,14 @@ import 'np.dart';
 import 'pp.dart';
 import 'vp.dart';
 import 'sbar.dart';
+import 'rel.dart';
 
 export 'np.dart';
 export 'pp.dart';
 export 'vp.dart';
 export 's.dart';
 export 'sbar.dart';
+export 'rel.dart';
 
 SyntaxNode<dynamic> toSyntaxNode(Word word) {
   if (word is Verb && word.mood == Mood.ind) {
@@ -36,7 +38,11 @@ SyntaxNode<dynamic> toSyntaxNode(Word word) {
   } else if (word is Adverb) {
     return AdvP$s(word);
   } else if (word is Noun) {
-    return NP$s(word);
+    if (word.isPronoun) {
+      return Rel(word);
+    } else {
+      return NP$s(word);
+    }
   } else if (word is Adjective) {
     return AdjP$s(word);
   } else if (word is Conjunction) {

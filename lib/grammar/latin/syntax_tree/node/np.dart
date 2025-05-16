@@ -22,6 +22,7 @@ import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
 
+import 'rel.dart';
 import 's.dart' as s;
 import 'sbar.dart';
 import 'vp.dart';
@@ -215,6 +216,53 @@ class NP$m implements NP<NP$m> {
 
   @override
   Iterable<TreeDebugNode> getDebugChildren() => [_noun, ..._adjectives];
+}
+
+class NP$r implements NP<NP$r> {
+  final NP<dynamic> _noun;
+  final RelClause _relClause;
+
+  NP$r(this._noun, this._relClause) {
+    if (_noun.caze != _relClause.caze) {
+      throw ArgumentError("Cases do not match: ${_noun.caze} != ${_relClause.caze}");
+    }
+    if (_noun.plural != _relClause.plural) {
+      throw ArgumentError("Number doesn't match: ${_noun.plural ? 'plural' : 'singular'} != ${_relClause.plural ? 'plural' : 'singular'}");
+    }
+    if (!_noun.gender.equals(_relClause.gender)) {
+      throw ArgumentError("Gender doesn't match: ${_noun.gender} != ${_relClause.gender}");
+    }
+  }
+
+  static bool isValidPair(NP<dynamic> noun, RelClause relClause) =>
+      noun.caze == relClause.caze &&
+      noun.plural == relClause.plural &&
+      noun.gender.equals(relClause.gender);
+
+  @override
+  Case get caze => _noun.caze;
+
+  @override
+  bool get plural => _noun.plural;
+
+  @override
+  Gender get gender => _noun.gender;
+
+  @override
+  bool canBeModifiedBy(AdjP<dynamic> adj) => false;
+
+  @override
+  String translate({required Article? article, List<s.S>? parents}) =>
+      "${_noun.translate(article: article, parents: parents)}, ${_relClause.translate()},";
+
+  @override
+  NP$r shallowClone() => NP$r(_noun, _relClause);
+
+  @override
+  String getDebugLabel() => "NP_r -> ${translate(article: Article.definite)}";
+
+  @override
+  Iterable<TreeDebugNode> getDebugChildren() => [_noun, _relClause];
 }
 
 class NP$implicitSubject implements NP<NP$implicitSubject> {

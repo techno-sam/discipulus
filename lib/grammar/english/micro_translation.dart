@@ -76,6 +76,14 @@ String pluralizeNoun(String noun, bool plural) {
   return _specialPlurals[noun] ?? "${noun}s";
 }
 
+const _special3S = {
+  "have": "has",
+};
+
+String makeVerb3S(String verb) {
+  return _special3S[verb] ?? "${verb}s";
+}
+
 String generatePronoun(Person person, Gender gender) {
   String out = "";
   final plural = person.plural;

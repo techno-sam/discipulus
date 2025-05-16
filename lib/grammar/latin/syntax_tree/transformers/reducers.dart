@@ -80,3 +80,17 @@ class SbarReducer implements BiReducer<Conj<dynamic>, S, Sbar> {
   @override
   Sbar reduce(Conj<dynamic> a, S b) => Sbar(a, b);
 }
+
+class RelClauseReducer implements BiReducer<Rel, S, RelClause> {
+  const RelClauseReducer();
+
+  @override
+  RelClause reduce(Rel a, S b) => RelClause(a, b);
+}
+
+class NounRelClauseReducer implements BiReducer<NP<dynamic>, RelClause, NP$r> {
+  const NounRelClauseReducer();
+
+  @override
+  NP$r reduce(NP<dynamic> a, RelClause b) => NP$r(a, b);
+}

@@ -110,6 +110,9 @@ class PrepositionedNoun extends Word implements Noun {
   bool get isProper => wrapped.isProper;
 
   @override
+  bool get isPronoun => wrapped.isPronoun;
+
+  @override
   Noun? modify(Adjective adjective) {
     return null;
   }

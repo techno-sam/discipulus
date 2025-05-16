@@ -128,6 +128,7 @@ class Noun extends Word {
   late final Couple<String> _parts;
   late final List<List<String>> _translations;
   late final bool _isProper;
+  late final bool _isPronoun;
 
   Case get caze => _caze;
   bool get plural => _plural;
@@ -135,9 +136,12 @@ class Noun extends Word {
   Couple<String> get parts => _parts;
   List<List<String>> get translations => _translations;
   bool get isProper => _isProper;
+  bool get isPronoun => _isPronoun;
 
   String get primaryTranslation => pluralizeNoun(_translations[0][0], plural);
-  String get properConsideringPrimaryTranslation => isProper ? primaryTranslation.capitalize : "the $primaryTranslation";
+  String get properConsideringPrimaryTranslation => isProper
+      ? (isPronoun ? primaryTranslation : primaryTranslation.capitalize)
+      : "the $primaryTranslation";
 
   String verbProperConsideringPrimaryTranslation(Verb verb) {
     if (isProper) {
@@ -155,8 +159,9 @@ class Noun extends Word {
     required Gender gender,
     required Couple<String> parts,
     required List<List<String>> translations,
-    bool isProper = false
-  }): _caze = caze, _plural = plural, _gender = gender, _parts = parts, _translations = translations, _isProper = isProper;
+    bool isProper = false,
+    bool isPronoun = false
+  }): _caze = caze, _plural = plural, _gender = gender, _parts = parts, _translations = translations, _isProper = isProper, _isPronoun = isPronoun;
 
   Noun.lines({required L01Noun line01, required L02Noun line02, required L03Common line03}) {
     _caze = line01.caze;
@@ -166,15 +171,17 @@ class Noun extends Word {
     _parts = line02.parts;
     _translations = line03.translations;
     _isProper = false;
+    _isPronoun = false;
   }
 
-  Noun.pronounLines({required L01Pronoun line01, required L02Pronoun line02, required L03Common line03}) {
+  Noun.pronounLines({required L01Pronoun line01, required L02Pronoun? line02, required L03Common line03}) {
     _caze = line01.caze;
     _plural = line01.plural;
     _gender = line01.gender;
     _parts = Couple(line01.split, line01.split);
     _translations = line03.translations;
     _isProper = true;
+    _isPronoun = true;
   }
 
   @override
@@ -194,7 +201,7 @@ class Noun extends Word {
     if (isProper) throw "Modifying a proper noun is not (yet) supported";
     return adjective.plural == plural && adjective.gender.equals(gender) && adjective.caze == caze;
   }
-  
+
   Noun? modify(Adjective adjective) {
     if (!canModify(adjective)) return null;
     return ModifiedNoun.allTheParts(

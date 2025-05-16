@@ -41,12 +41,17 @@ class S implements SyntaxNode<S> {
   static bool isValidPair(NP<dynamic> subject, VP predicate) =>
       subject.caze == Case.nom && subject.plural == predicate.person.plural;
 
-  String translate(List<S>? parents) {
+  String translate(List<S>? parents, {bool skipImplicitSubject = false}) {
     parents = [this, if (parents != null) ...parents];
 
-    final subjectTranslation = _subject.translate(article: Article.definite, parents: parents);
     final predicateTranslation = _predicate.translate(parents);
-    return "$subjectTranslation $predicateTranslation";
+
+    if (skipImplicitSubject && _subject is NP$implicitSubject) {
+      return predicateTranslation;
+    } else {
+      final subjectTranslation = _subject.translate(article: Article.definite, parents: parents);
+      return "$subjectTranslation $predicateTranslation";
+    }
   }
 
   @override
