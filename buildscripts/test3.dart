@@ -16,22 +16,25 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/nodes.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/parser.dart' as parser;
 
 void main() {
-  const raw = "Cornelia et pueri Romani timidi magnos glires celeriter edunt in foro";
+  const raw = "Marcus et ego celeriter ambulant ad hortum cum Cornelia";
   final bundle = SentenceBundle.fromSentence(raw, debugMode: true);
 
   print("\n\nTranslating: $raw");
 
-  for (final sentence in bundle.allPossibleSentences()) {
+  for (final pair in bundle.allPossibleSentences().enumerate) {
+    final sentence = pair.second;
     final nodes = parser.parse(sentence, showIntermediate: false);
 
     if (nodes.length == 1 && nodes[0] is S) {
-      print("\n${TreeDebugNode.getDebugLines(nodes[0]).join("\n")}");
+      print("\nSentence idx ${pair.first}:");
+      print(TreeDebugNode.getDebugLines(nodes[0]).join("\n"));
     }
   }
 }

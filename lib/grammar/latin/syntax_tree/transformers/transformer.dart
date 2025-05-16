@@ -170,7 +170,9 @@ class VPTransformer extends Transformer {
         .firstOrNull;
     if (verb == null) return false;
 
-    final dirObj = nodes.enumerate
+    final dirObj = verb.second.verbKind == VerbKind.intrans
+        ? null
+        : nodes.enumerate
         .whereSecondType<NP>()
         .where((p) => p.second.caze == Case.acc)
         .firstOrNull;

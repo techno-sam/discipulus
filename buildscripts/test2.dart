@@ -157,10 +157,15 @@ Sentence gliresEduntInForo() {
   );
 }
 
+Sentence indexedBundle(String sentence, int index) {
+  final bundle = SentenceBundle.fromSentence(sentence, debugMode: true);
+  return bundle.allPossibleSentences()[index];
+}
+
 void main() {
   //debug.testMe();
 
-  final sentence = corneliaEtPueriRomaniTimidiMagnosGliresCeleriterEduntInForo();
+  final sentence = indexedBundle("Marcus et ego celeriter ambulant ad hortum cum Cornelia", 2);
   //translateSentenceOld(sentence.original);
   parser.parse(sentence);
 }
