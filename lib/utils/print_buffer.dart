@@ -1,6 +1,6 @@
 /*
  *     Discipulus
- *     Copyright (C) 2023  Sam Wagenaar
+ *     Copyright (C) 2023-2025  Sam Wagenaar
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
