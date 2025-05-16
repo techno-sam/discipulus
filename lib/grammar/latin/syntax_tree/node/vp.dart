@@ -209,7 +209,7 @@ class VP implements SyntaxNode<VP> {
       translation += " ${_directObject.translate(article: Article.definite)}";
     }
     if (_indirectObject != null) {
-      translation += " ${_indirectObject.translate(article: Article.definite)}";
+      translation += " to ${_indirectObject.translate(article: Article.definite)}";
     }
     if (adverbPart.isNotEmpty) {
       translation += " $adverbPart";

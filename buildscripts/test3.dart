@@ -23,7 +23,7 @@ import 'package:discipulus/grammar/latin/syntax_tree/node/nodes.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/parser.dart' as parser;
 
 void main() {
-  const raw = "Cornelia iam sub arbore sedet cum Flavia et legit";
+  const raw = "Sextus dat glirem puellae Romanae";
   final bundle = SentenceBundle.fromSentence(raw, debugMode: true);
 
   print("\n\nTranslating: $raw");
