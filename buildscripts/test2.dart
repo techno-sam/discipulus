@@ -126,6 +126,25 @@ Sentence corneliaEtPueriRomaniTimidiGliresNonEduntCeleriterInForo() {
   );
 }
 
+Sentence corneliaEtPueriRomaniTimidiMagnosGliresCeleriterEduntInForo() {
+  return Sentence(
+    original: "Cornelia et pueri Romani timidi magnos glires celeriter edunt in foro",
+    words: [
+      Noun.allTheParts(caze: Case.nom, plural: false, gender: Gender.f, parts: const Couple("Cornelia", "Corneliae"), translations: [["Cornelia"]], isProper: true),
+      Conjunction(word: "et", translations: [["and"]]),
+      Noun.allTheParts(caze: Case.nom, plural: true, gender: Gender.m, parts: const Couple("puer", "pueri"), translations: [["boy"]]),
+      Adjective.allTheParts(caze: Case.nom, plural: true, gender: Gender.m, parts: ["romanus", "romana"], translations: [["Roman"]], comparisonType: ComparisonType.pos),
+      Adjective.allTheParts(caze: Case.nom, plural: true, gender: Gender.m, parts: ["timidus", "timida", "-um"], translations: [["timid"]], comparisonType: ComparisonType.pos),
+      Adjective.allTheParts(caze: Case.acc, plural: true, gender: Gender.m, parts: ["magnus", "magna", "-um"], translations: [["large"]], comparisonType: ComparisonType.pos),
+      Noun.allTheParts(caze: Case.acc, plural: true, gender: Gender.m, parts: const Couple("glis", "gliris"), translations: [["dormouse"]]),
+      Adverb(word: "celeriter", comparisonType: ComparisonType.pos, parts: ["celeriter", "celerius", "celerrime"], translations: [["quickly"]]),
+      Verb(tense: Tense.pres, person: Person(person: 3, plural: true), mood: Mood.ind, principleParts: "edo, edere", translations: "eat", verbKind: VerbKind.trans),
+      Preposition(word: "in", caze: Case.abl, translations: [["in"]]),
+      Noun.allTheParts(caze: Case.abl, plural: false, gender: Gender.n, parts: const Couple("forum", "fori"), translations: [["market"]]),
+    ],
+  );
+}
+
 Sentence gliresEduntInForo() {
   return Sentence(
     original: "glires edunt in foro",
@@ -141,7 +160,7 @@ Sentence gliresEduntInForo() {
 void main() {
   //debug.testMe();
 
-  final sentence = corneliaEtPueriRomaniTimidiGliresNonEduntCeleriterInForo();
+  final sentence = corneliaEtPueriRomaniTimidiMagnosGliresCeleriterEduntInForo();
   //translateSentenceOld(sentence.original);
   parser.parse(sentence);
 }

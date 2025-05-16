@@ -29,11 +29,13 @@ void _dbg(List<SyntaxNode> nodes, [String indent = ""]) {
   }
 }
 
-void parse(Sentence sentence) {
+List<SyntaxNode> parse(Sentence sentence, {bool showIntermediate = true}) {
   List<SyntaxNode> nodes = sentence.words.map(toSyntaxNode).toList();
-  _dbg(nodes, "\t");
 
-  print("\nTransforming...\n");
+  if (showIntermediate) {
+    _dbg(nodes, "\t");
+    print("\nTransforming...\n");
+  }
 
   final transformers = [
     const BiTransformer<NP<dynamic>, AdjP<dynamic>, NP$m>(
@@ -86,7 +88,11 @@ void parse(Sentence sentence) {
 
   for (final transformer in transformers) {
     transformer.transformAll(nodes);
-    print("\n${transformer.label}:");
-    _dbg(nodes, "\t");
+    if (showIntermediate) {
+      print("\n${transformer.label}:");
+      _dbg(nodes, "\t");
+    }
   }
+
+  return nodes;
 }
