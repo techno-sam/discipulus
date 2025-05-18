@@ -195,6 +195,11 @@ extension MinMaxWithIterable<E> on Iterable<E> {
   E minWith(int Function(E) mapper) => reduce((a, b) => mapper.call(a) < mapper.call(b) ? a : b);
 }
 
+extension MinMaxWithOrNullIterable<E> on Iterable<E> {
+  E? maxWithOrNull(int Function(E) mapper) => fold(null, (acc, e) => acc == null ? e : (mapper.call(e) > mapper.call(acc) ? e : acc));
+  E? minWithOrNull(int Function(E) mapper) => fold(null, (acc, e) => acc == null ? e : (mapper.call(e) < mapper.call(acc) ? e : acc));
+}
+
 extension WherePairIterable<A, B> on Iterable<Pair<A, B>> {
   Iterable<Pair<T, B>> whereFirstType<T>() {
     return where((p) => p.first is T).map((p) => p.cast<T, B>());

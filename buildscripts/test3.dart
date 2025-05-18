@@ -24,8 +24,9 @@ import 'package:discipulus/grammar/latin/syntax_tree/parser.dart' as parser;
 
 void main() {
   // "Cornelia quae cotidie ambulat edit glirem quod famem habet"
+  // "Cornelia quae cotidie ambulat edit glirem quod famem habet et Romana est"
   // "Sextus qui cotidie celerrime ambulat dat glirem puellae Romanae"
-  const raw = "Cornelia quae cotidie ambulat edit glirem quod famem habet et legit libros";
+  const raw = "Sextus et Flavia glires non edunt quod non sunt cives Romani";
   final bundle = SentenceBundle.fromSentence(raw, debugMode: true);
 
   print("\n\nTranslating: $raw");

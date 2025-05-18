@@ -16,6 +16,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/grammar/english/micro_translation.dart' show conjugateToBe;
 import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/np.dart';
@@ -23,7 +24,7 @@ import 'package:discipulus/grammar/latin/syntax_tree/node/pp.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/sbar.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
 
-import 's.dart';
+import 's.dart' as s;
 
 typedef AdverbConsumer = void Function(String);
 
@@ -31,6 +32,8 @@ abstract interface class V<S extends V<S>> implements SyntaxNode<S> {
   Tense get tense;
   Person get person;
   VerbKind get verbKind;
+
+  bool get isLinkingVerb;
 
   String translate({bool suppress3S = false, AdverbConsumer? adverbConsumer});
 }
@@ -57,13 +60,20 @@ class V$s implements V<V$s> {
   Person get person => _verb.person;
   @override
   VerbKind get verbKind => _verb.verbKind;
+  @override
+  bool get isLinkingVerb => _verb.isToBe; // todo expand to other linking verbs
 
   @override
-  String translate({bool suppress3S = false, AdverbConsumer? adverbConsumer}) => person.person == 3
+  String translate({bool suppress3S = false, AdverbConsumer? adverbConsumer}) {
+    if (_verb.isToBe) {
+      return conjugateToBe(person);
+    }
+    return person.person == 3
       && !person.plural
       && !suppress3S
       ? _verb.primary3SingTranslation
       : _verb.primaryTranslation;
+  }
 
   @override
   V$s shallowClone() => V$s(_verb);
@@ -112,6 +122,8 @@ class V$m implements V<V$m> {
   Person get person => _verb.person;
   @override
   VerbKind get verbKind => _verb.verbKind;
+  @override
+  bool get isLinkingVerb => _verb.isLinkingVerb;
 
   @override
   String translate({bool suppress3S = false, AdverbConsumer? adverbConsumer}) {
@@ -126,11 +138,18 @@ class V$m implements V<V$m> {
     }
 
     final bool is3S = person.person == 3 && !person.plural && !suppress3S;
-    final String verbTranslation = negate
-        ? (is3S
-            ? "does not ${_verb.translate(suppress3S: true)}"
-            : "do not ${_verb.translate(suppress3S: true)}")
-        : _verb.translate(suppress3S: suppress3S);
+    final String verbTranslation;
+    if (negate) {
+      if (_verb.isLinkingVerb) {
+        verbTranslation = "${_verb.translate()} not";
+      } else if (is3S){
+        verbTranslation = "does not ${_verb.translate(suppress3S: true)}";
+      } else {
+        verbTranslation = "do not ${_verb.translate(suppress3S: true)}";
+      }
+    } else {
+      verbTranslation = _verb.translate(suppress3S: suppress3S);
+    }
 
     String adverbPart = "";
     if (translations.isNotEmpty) {
@@ -167,14 +186,21 @@ class V$m implements V<V$m> {
   Iterable<TreeDebugNode> getDebugChildren() => [_verb, ..._adverbs];
 }
 
-class VP implements SyntaxNode<VP> {
+abstract interface class VP<S extends VP<S>> implements SyntaxNode<S> {
+  Tense get tense;
+  Person get person;
+
+  String translate(List<s.S>? parents);
+}
+
+class VP$s implements VP<VP$s> {
   final V<dynamic> _v;
   final NP<dynamic>? _directObject;
   final NP<dynamic>? _indirectObject;
   final List<PP> _prepositionalPhrases;
   final Sbar? _sbar;
 
-  VP({
+  VP$s({
     required V<dynamic> verb,
     NP<dynamic>? directObject,
     NP<dynamic>? indirectObject,
@@ -187,6 +213,8 @@ class VP implements SyntaxNode<VP> {
         _prepositionalPhrases = prepositionalPhrases,
         _sbar = sbar
   {
+    assert(!(_v.isLinkingVerb), "VP\$s cannot be a linking verb");
+
     if (directObject != null && directObject.caze != Case.acc) {
       throw ArgumentError.value(directObject.caze, "directObject.caze", "Direct Object must be accusative");
     }
@@ -195,10 +223,13 @@ class VP implements SyntaxNode<VP> {
     }
   }
 
+  @override
   Tense get tense => _v.tense;
+  @override
   Person get person => _v.person;
 
-  String translate(List<S>? parents) {
+  @override
+  String translate(List<s.S>? parents) {
     String adverbPart = "";
     void adverbConsumer(String advP) {
       adverbPart = advP;
@@ -224,7 +255,7 @@ class VP implements SyntaxNode<VP> {
   }
 
   @override
-  VP shallowClone() => VP(
+  VP$s shallowClone() => VP$s(
       verb: _v,
       directObject: _directObject,
       indirectObject: _indirectObject,
@@ -232,13 +263,97 @@ class VP implements SyntaxNode<VP> {
   );
 
   @override
-  String getDebugLabel() => "VP -> ${translate(null)}";
+  String getDebugLabel() => "VP_s -> ${translate(null)}";
 
   @override
   Iterable<TreeDebugNode> getDebugChildren() => [
     _v,
     if (_directObject != null) LiteralDebugNode("NP_dirObj", [_directObject]),
     if (_indirectObject != null) LiteralDebugNode("NP_indObj", [_indirectObject]),
+    ..._prepositionalPhrases,
+    if (_sbar != null) _sbar
+  ];
+}
+
+class VP$l implements VP<VP$l> {
+  final V<dynamic> _v;
+  final LP<dynamic>? _directObject;
+  final List<PP> _prepositionalPhrases;
+  final Sbar? _sbar;
+
+  VP$l({
+    required V<dynamic> verb,
+    LP<dynamic>? directObject,
+    required List<PP> prepositionalPhrases,
+    Sbar? sbar
+  })
+      : _v = verb,
+        _directObject = directObject,
+        _prepositionalPhrases = prepositionalPhrases,
+        _sbar = sbar
+  {
+    assert(_v.isLinkingVerb, "VP\$l must be a linking verb");
+
+    if (directObject != null) {
+      if (directObject.caze != Case.nom) {
+        throw ArgumentError.value(directObject.caze, "directObject.caze",
+            "Direct Object must be nominative");
+      }
+      if (directObject.plural != _v.person.plural) {
+        throw ArgumentError.value(directObject.plural, "directObject.plural",
+            "Direct Object must agree in number with the verb");
+      }
+    }
+  }
+
+  static bool isValidPair(V<dynamic> verb, LP<dynamic> directObject) {
+    return verb.isLinkingVerb && directObject.caze == Case.nom && verb.person.plural == directObject.plural;
+  }
+
+  @override
+  Tense get tense => _v.tense;
+  @override
+  Person get person => _v.person;
+
+  LP<dynamic>? get directObject => _directObject;
+  bool get hasPrepositionalPhrases => _prepositionalPhrases.isNotEmpty;
+
+  @override
+  String translate(List<s.S>? parents) {
+    String translation = _v.translate();
+
+    if (_directObject != null) {
+      translation += " ${_directObject.translateLP(parents: parents)}";
+    }
+
+    for (final pp in _prepositionalPhrases) {
+      translation += " ${pp.translate(article: Article.definite)}";
+    }
+    if (_sbar != null) {
+      translation += ", ${_sbar.translate(parents)}";
+    }
+    return translation;
+  }
+
+  VP$l withoutDirectObject() => VP$l(
+    verb: _v,
+    prepositionalPhrases: _prepositionalPhrases
+  );
+
+  @override
+  VP$l shallowClone() => VP$l(
+      verb: _v,
+      directObject: _directObject,
+      prepositionalPhrases: _prepositionalPhrases
+  );
+
+  @override
+  String getDebugLabel() => "VP_l -> ${translate(null)}";
+
+  @override
+  Iterable<TreeDebugNode> getDebugChildren() => [
+    _v,
+    if (_directObject != null) LiteralDebugNode("NP_dirObj", [_directObject]),
     ..._prepositionalPhrases,
     if (_sbar != null) _sbar
   ];

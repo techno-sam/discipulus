@@ -22,9 +22,9 @@ import 'package:discipulus/grammar/latin/syntax_tree/node/nodes.dart';
 
 class S implements SyntaxNode<S> {
   final NP<dynamic> _subject;
-  final VP _predicate;
+  final VP<dynamic> _predicate;
 
-  S({required NP<dynamic> subject, required VP predicate, Sbar? sbar})
+  S({required NP<dynamic> subject, required VP<dynamic> predicate, Sbar? sbar})
       : _subject = subject,
         _predicate = predicate
   {
@@ -37,8 +37,9 @@ class S implements SyntaxNode<S> {
   }
 
   NP<dynamic> get subject => _subject;
+  VP<dynamic> get predicate => _predicate;
 
-  static bool isValidPair(NP<dynamic> subject, VP predicate) =>
+  static bool isValidPair(NP<dynamic> subject, VP<dynamic> predicate) =>
       subject.caze == Case.nom && subject.plural == predicate.person.plural;
 
   String translate(List<S>? parents, {bool skipImplicitSubject = false}) {

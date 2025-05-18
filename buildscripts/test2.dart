@@ -218,7 +218,7 @@ Sentence indexedBundle(String sentence, int index) {
 void main() {
   //debug.testMe();
 
-  final sentence = indexedBundle("Cornelia quae cotidie ambulat edit glirem quod famem habet", 26);//corneliaQuaeCotidieAmbulatEditGlirem();//indexedBundle("Marcus et ego celeriter ambulant ad hortum cum Cornelia", 2);
+  final sentence = indexedBundle("in pictura est villa", 6);//corneliaQuaeCotidieAmbulatEditGlirem();//indexedBundle("Marcus et ego celeriter ambulant ad hortum cum Cornelia", 2);
   //translateSentenceOld(sentence.original);
   parser.parse(sentence);
 }

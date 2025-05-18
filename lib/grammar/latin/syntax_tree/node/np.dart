@@ -28,28 +28,45 @@ import 'sbar.dart';
 import 'vp.dart';
 
 enum Article {
-  indefinite("a"),
-  definite("the")
+  indefinite("a", null),
+  definite("the", "the")
   ;
   final String translation;
+  final String? pluralTranslation;
 
-  const Article(this.translation);
+  const Article(this.translation, this.pluralTranslation);
 
-  String applyTo(String noun) => "$translation $noun";
+  String applyTo(String noun, bool plural) => plural
+      ? (pluralTranslation == null ? noun : "$pluralTranslation $noun")
+      : "$translation $noun";
 }
 
-abstract interface class NP<S extends NP<S>> implements SyntaxNode<S> {
+abstract interface class LP<S extends LP<S>> implements SyntaxNode<S> {
   Case get caze;
   bool get plural;
+  Gender get gender;
+
+  String translateLP({List<s.S>? parents});
+}
+
+abstract interface class NP<S extends NP<S>> implements LP<S> {
+  @override
+  Case get caze;
+  @override
+  bool get plural;
+  @override
   Gender get gender;
 
   bool canBeModifiedBy(AdjP<dynamic> adj);
   String translate({required Article? article, List<s.S>? parents});
 }
 
-abstract interface class AdjP<S extends AdjP<S>> implements SyntaxNode<S> {
+abstract interface class AdjP<S extends AdjP<S>> implements LP<S> {
+  @override
   Case get caze;
+  @override
   bool get plural;
+  @override
   Gender get gender;
   ComparisonType get comparisonType;
 
@@ -74,14 +91,18 @@ class NP$s implements NP<NP$s> {
   bool canBeModifiedBy(AdjP<dynamic> adj) {
     return adj.caze == caze &&
         adj.plural == plural &&
-        adj.gender == gender;
+        adj.gender.equals(gender);
   }
 
   @override
   String translate({required Article? article, List<s.S>? parents}) {
     if (_noun.isProper) article = null;
-    return article?.applyTo(_noun.primaryTranslation) ?? _noun.primaryTranslation;
+    return article?.applyTo(_noun.primaryTranslation, plural) ?? _noun.primaryTranslation;
   }
+
+  @override
+  String translateLP({List<s.S>? parents}) =>
+      translate(article: Article.indefinite, parents: parents);
 
   @override
   NP$s shallowClone() => NP$s(_noun);
@@ -113,6 +134,9 @@ class AdjP$s implements AdjP<AdjP$s> {
   @override
   String translate({required NP<dynamic> target}) =>
       _adjective.primaryTranslation;
+
+  @override
+  String translateLP({List<s.S>? parents}) => _adjective.primaryTranslation;
 
   @override
   AdjP$s shallowClone() => AdjP$s(_adjective);
@@ -153,6 +177,10 @@ class NP$c implements NP<NP$c> {
   @override
   String translate({required Article? article, List<s.S>? parents}) =>
       "${_a.translate(article: article, parents: parents)} and ${_b.translate(article: article, parents: parents)}";
+
+  @override
+  String translateLP({List<s.S>? parents}) =>
+      translate(article: Article.indefinite, parents: parents);
 
   @override
   NP$c shallowClone() => NP$c(_a, _b);
@@ -203,8 +231,12 @@ class NP$m implements NP<NP$m> {
       ..._adjectives.reversed.map((a) => a.translate(target: _noun)),
       _noun.translate(article: null, parents: parents)
     ].join(" ");
-    return article?.applyTo(base) ?? base;
+    return article?.applyTo(base, plural) ?? base;
   }
+
+  @override
+  String translateLP({List<s.S>? parents}) =>
+      translate(article: Article.indefinite, parents: parents);
 
   @override
   NP$m shallowClone() => NP$m(_noun, _adjectives.shallowCopy());
@@ -256,6 +288,10 @@ class NP$r implements NP<NP$r> {
       "${_noun.translate(article: article, parents: parents)}, ${_relClause.translate()},";
 
   @override
+  String translateLP({List<s.S>? parents}) =>
+      translate(article: Article.indefinite, parents: parents);
+
+  @override
   NP$r shallowClone() => NP$r(_noun, _relClause);
 
   @override
@@ -270,7 +306,7 @@ class NP$implicitSubject implements NP<NP$implicitSubject> {
 
   const NP$implicitSubject(this._person);
 
-  factory NP$implicitSubject.fromVerb(VP vp) {
+  factory NP$implicitSubject.fromVerb(VP<dynamic> vp) {
     return NP$implicitSubject(vp.person);
   }
 
@@ -308,4 +344,7 @@ class NP$implicitSubject implements NP<NP$implicitSubject> {
 
     return generatePronoun(_person, $gender);
   }
+
+  @override
+  String translateLP({List<s.S>? parents}) => throw UnimplementedError("translateLP() not implemented for NP\$implicitSubject");
 }

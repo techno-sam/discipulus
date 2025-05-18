@@ -160,17 +160,18 @@ class TriTransformer<A extends SyntaxNode<dynamic>, B extends SyntaxNode<dynamic
   }
 }
 
-class VPTransformer extends Transformer {
-  const VPTransformer();
+class VP$sTransformer extends Transformer {
+  const VP$sTransformer();
 
   @override
-  String get label => "VP Collector";
+  String get label => "VP_s Collector";
 
   @override
   bool transformOnce(ClauseUnit clauseUnit) {
     final List<SyntaxNode<dynamic>> nodes = clauseUnit.nodes;
     final verb = nodes.enumerate
         .whereSecondType<V>()
+        .where((p) => !p.second.isLinkingVerb)
         .firstOrNull;
     if (verb == null) return false;
 
@@ -203,7 +204,7 @@ class VPTransformer extends Transformer {
         .where((p) => p != null)
         .firstOrNull;
 
-    final vp = VP(
+    final vp = VP$s(
       verb: verb.second,
       directObject: dirObj?.second,
       indirectObject: indObj?.second,
@@ -214,6 +215,59 @@ class VPTransformer extends Transformer {
     _replace(nodes: nodes, primary: verb, result: vp, secondary: [
       if (dirObj != null) dirObj,
       if (indObj != null) indObj,
+      ...prepositionalPhrases,
+      if (sbar != null) sbar,
+    ]);
+
+    return true;
+  }
+}
+
+class VP$lTransformer extends Transformer {
+  const VP$lTransformer();
+
+  @override
+  String get label => "VP_l Collector";
+
+  @override
+  bool transformOnce(ClauseUnit clauseUnit) {
+    final List<SyntaxNode<dynamic>> nodes = clauseUnit.nodes;
+    final verb = nodes.enumerate
+        .whereSecondType<V>()
+        .where((p) => p.second.isLinkingVerb)
+        .firstOrNull;
+    if (verb == null) return false;
+
+    final dirObj = nodes.enumerate
+        .whereSecondType<LP<dynamic>>()
+        .where((p) => p.second.caze == Case.nom)
+        .minWithOrNull((a) => -(a.first - 1).compareTo(verb.first));
+    if (dirObj != null && !VP$l.isValidPair(verb.second, dirObj.second)) return false;
+
+    final prepositionalPhrases = nodes.enumerate
+        .whereSecondType<PP>()
+        .toList();
+
+    final sbar = nodes.enumerate
+        .whereSecondType<ClauseUnit>()
+        .map((p) {
+      if (p.second.nodes.length != 1) return null;
+      final node = p.second.nodes[0];
+      if (node is! Sbar) return null;
+      return Pair(p.first, node);
+    })
+        .where((p) => p != null)
+        .firstOrNull;
+
+    final vp = VP$l(
+        verb: verb.second,
+        directObject: dirObj?.second,
+        prepositionalPhrases: prepositionalPhrases.map((p) => p.second).toList(),
+        sbar: sbar?.second
+    );
+
+    _replace(nodes: nodes, primary: verb, result: vp, secondary: [
+      if (dirObj != null) dirObj,
       ...prepositionalPhrases,
       if (sbar != null) sbar,
     ]);
@@ -338,6 +392,39 @@ class RelClauseUnpackTransformer extends Transformer {
     } else {
       return false;
     }
+  }
+}
+
+/// De-mangle linking verbs. The architecture isn't otherwise smart enough to require a subject.
+class LinkingSentenceDemanglingTransformer extends Transformer {
+  const LinkingSentenceDemanglingTransformer();
+
+  @override
+  String get label => "Linking Sentence Demangler";
+
+  @override
+  bool transformOnce(ClauseUnit clauseUnit) {
+    if (clauseUnit.parent != null) return false;
+
+    final sentence = clauseUnit.nodes.enumerate
+        .whereSecondType<S>()
+        .firstOrNull;
+    if (sentence == null) return false;
+
+    final subject = sentence.second.subject;
+    final predicate = sentence.second.predicate;
+
+    if (subject is! NP$implicitSubject) return false;
+    if (predicate is! VP$l) return false;
+    if (predicate.directObject is! NP<dynamic>) return false;
+    if (!predicate.hasPrepositionalPhrases) return false;
+
+    clauseUnit.nodes[sentence.first] = S(
+      subject: predicate.directObject as NP<dynamic>,
+      predicate: predicate.withoutDirectObject()
+    );
+
+    return true;
   }
 }
 

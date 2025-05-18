@@ -53,11 +53,11 @@ class AdverbReducer implements BiReducer<V<dynamic>, AdvP<dynamic>, V$m> {
   }
 }
 
-class SentenceReducer implements BiReducer<NP<dynamic>, VP, S> {
+class SentenceReducer implements BiReducer<NP<dynamic>, VP<dynamic>, S> {
   const SentenceReducer();
 
   @override
-  S reduce(NP<dynamic> a, VP b) => S(subject: a, predicate: b);
+  S reduce(NP<dynamic> a, VP<dynamic> b) => S(subject: a, predicate: b);
 }
 
 class EtReducer implements TriReducer<NP<dynamic>, Et, NP<dynamic>, NP$c> {

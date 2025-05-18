@@ -32,13 +32,17 @@ export 's.dart';
 export 'sbar.dart';
 export 'rel.dart';
 
+bool _isRelPronoun(Noun noun) {
+  return noun.translations[0][0] == "who";
+}
+
 SyntaxNode<dynamic> toSyntaxNode(Word word) {
   if (word is Verb && word.mood == Mood.ind) {
     return V$s(word);
   } else if (word is Adverb) {
     return AdvP$s(word);
   } else if (word is Noun) {
-    if (word.isPronoun) {
+    if (word.isPronoun && _isRelPronoun(word)) {
       return Rel(word);
     } else {
       return NP$s(word);

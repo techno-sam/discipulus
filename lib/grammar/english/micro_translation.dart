@@ -51,7 +51,7 @@ String applyComparison(String adjectiveTranslation, ComparisonType comparison, {
   }
 }
 
-String _conjugateToBe(Person person) {
+String conjugateToBe(Person person) {
   final singular = !person.plural;
   switch (person.person) {
     case 1:
@@ -66,7 +66,8 @@ String _conjugateToBe(Person person) {
 
 const _specialPlurals = {
   "woman": "women",
-  "man": "men"
+  "man": "men",
+  "who": "who",
 };
 
 String pluralizeNoun(String noun, bool plural) {
@@ -125,7 +126,7 @@ String translateVerb(Verb verb, [Noun? subject, bool subjectNounFromSuperClause 
   }
   out += " ";
   if (verb.isToBe) {
-    String verbPart = _conjugateToBe(verb.person);
+    String verbPart = conjugateToBe(verb.person);
     if (verb is ModifiedVerb) {
       if (verb.adverb.parts[0] == "non") {
         verbPart += " not";

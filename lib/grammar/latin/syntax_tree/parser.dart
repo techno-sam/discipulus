@@ -68,8 +68,14 @@ ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
       reducer: EtReducer()
     ),
     const BiTransformer<V<dynamic>, AdvP<dynamic>, V$m>(
-      label: "Adverb Applicator (Adjacent)",
-      matcher: OrderNeutralBiMatcher(),
+      label: "Adverb Applicator (Adjacent, Common Order)",
+      matcher: OrderReversedBiMatcher(),
+      selector: NearestIndexBiSelector(targetIndex: 0),
+      reducer: AdverbReducer(),
+    ),
+    const BiTransformer<V<dynamic>, AdvP<dynamic>, V$m>(
+      label: "Adverb Applicator (Adjacent, Rare Order)",
+      matcher: OrderForwardBiMatcher(),
       selector: NearestIndexBiSelector(targetIndex: 0),
       reducer: AdverbReducer(),
     ),
@@ -99,8 +105,9 @@ ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
             selector: NearestIndexBiSelector(targetIndex: 0),
             reducer: NounRelClauseReducer(),
           ),
-          VPTransformer(),
-          BiTransformer<NP<dynamic>, VP, S>(
+          VP$sTransformer(),
+          VP$lTransformer(),
+          BiTransformer<NP<dynamic>, VP<dynamic>, S>(
             label: "Sentence Applicator",
             matcher: FallbackABiMatcher(
                 primary: PredicateBiMatcher(
@@ -112,6 +119,7 @@ ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
             selector: FirstBiSelector(),
             reducer: SentenceReducer(),
           ),
+          LinkingSentenceDemanglingTransformer(),
           BiTransformer<Conj<dynamic>, S, Sbar>(
             label: "Conjunction Applicator",
             matcher: OrderForwardBiMatcher(),
