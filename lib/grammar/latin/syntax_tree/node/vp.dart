@@ -16,12 +16,14 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart' show conjugateToBe;
 import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/np.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/pp.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/sbar.dart';
+import 'package:discipulus/grammar/latin/syntax_tree/node/vinf.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
 
 import 's.dart' as s;
@@ -195,14 +197,42 @@ abstract interface class VP<S extends VP<S>> implements SyntaxNode<S> {
 
 class VP$s implements VP<VP$s> {
   final V<dynamic> _v;
-  final NP<dynamic>? _directObject;
+  final Either<NP<dynamic>, VInfP>? _directObject;
   final NP<dynamic>? _indirectObject;
   final List<PP> _prepositionalPhrases;
   final Sbar? _sbar;
 
-  VP$s({
+  VP$s.noun({
     required V<dynamic> verb,
     NP<dynamic>? directObject,
+    NP<dynamic>? indirectObject,
+    required List<PP> prepositionalPhrases,
+    Sbar? sbar
+  }): this(
+    verb: verb,
+    directObject: directObject == null ? null : Either.a(directObject),
+    indirectObject: indirectObject,
+    prepositionalPhrases: prepositionalPhrases,
+    sbar: sbar
+  );
+
+  VP$s.vinf({
+    required V<dynamic> verb,
+    VInfP? directObject,
+    NP<dynamic>? indirectObject,
+    required List<PP> prepositionalPhrases,
+    Sbar? sbar
+  }): this(
+      verb: verb,
+      directObject: directObject == null ? null : Either.b(directObject),
+      indirectObject: indirectObject,
+      prepositionalPhrases: prepositionalPhrases,
+      sbar: sbar
+  );
+
+  VP$s({
+    required V<dynamic> verb,
+    Either<NP<dynamic>, VInfP>? directObject,
     NP<dynamic>? indirectObject,
     required List<PP> prepositionalPhrases,
     Sbar? sbar
@@ -215,9 +245,16 @@ class VP$s implements VP<VP$s> {
   {
     assert(!(_v.isLinkingVerb), "VP\$s cannot be a linking verb");
 
-    if (directObject != null && directObject.caze != Case.acc) {
-      throw ArgumentError.value(directObject.caze, "directObject.caze", "Direct Object must be accusative");
-    }
+    directObject?.run((a) {
+      if (a.caze != Case.acc) {
+        throw ArgumentError.value(a.caze, "directObject.caze", "Direct Object must be accusative");
+      }
+    }, (b) {
+      if (indirectObject != null) {
+        throw ArgumentError.value(indirectObject, "indirectObject", "Cannot have an infinitive direct object and an indirect object");
+      }
+    });
+
     if (indirectObject != null && indirectObject.caze != Case.dat) {
       throw ArgumentError.value(indirectObject.caze, "indirectObject.caze", "Indirect Object must be dative");
     }
@@ -236,9 +273,10 @@ class VP$s implements VP<VP$s> {
     }
 
     String translation = _v.translate(adverbConsumer: adverbConsumer);
-    if (_directObject != null) {
-      translation += " ${_directObject.translate(article: Article.definite)}";
-    }
+    _directObject?.run(
+      (a) => translation += " ${a.translate(article: Article.definite)}",
+      (b) => translation += " ${b.translate()}"
+    );
     if (_indirectObject != null) {
       translation += " to ${_indirectObject.translate(article: Article.definite)}";
     }
@@ -268,7 +306,7 @@ class VP$s implements VP<VP$s> {
   @override
   Iterable<TreeDebugNode> getDebugChildren() => [
     _v,
-    if (_directObject != null) LiteralDebugNode("NP_dirObj", [_directObject]),
+    if (_directObject != null) LiteralDebugNode("NP_dirObj", [_directObject.apply<SyntaxNode<dynamic>>((a) => a, (b) => b)]),
     if (_indirectObject != null) LiteralDebugNode("NP_indObj", [_indirectObject]),
     ..._prepositionalPhrases,
     if (_sbar != null) _sbar

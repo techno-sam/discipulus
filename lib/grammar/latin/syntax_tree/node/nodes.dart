@@ -15,7 +15,6 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/grammar_types.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/word_types.dart';
@@ -24,6 +23,7 @@ import 'pp.dart';
 import 'vp.dart';
 import 'sbar.dart';
 import 'rel.dart';
+import 'vinf.dart';
 
 export 'np.dart';
 export 'pp.dart';
@@ -31,6 +31,7 @@ export 'vp.dart';
 export 's.dart';
 export 'sbar.dart';
 export 'rel.dart';
+export 'vinf.dart';
 
 bool _isRelPronoun(Noun noun) {
   return noun.translations[0][0] == "who";
@@ -39,6 +40,8 @@ bool _isRelPronoun(Noun noun) {
 SyntaxNode<dynamic> toSyntaxNode(Word word) {
   if (word is Verb && word.mood == Mood.ind) {
     return V$s(word);
+  } else if (word is Verb && word.mood == Mood.inf) {
+    return VInf(word);
   } else if (word is Adverb) {
     return AdvP$s(word);
   } else if (word is Noun) {

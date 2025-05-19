@@ -160,6 +160,41 @@ class TriTransformer<A extends SyntaxNode<dynamic>, B extends SyntaxNode<dynamic
   }
 }
 
+class VInfPTransformer extends Transformer {
+  const VInfPTransformer();
+
+  @override
+  String get label => "VInfP Collector";
+
+  @override
+  bool transformOnce(ClauseUnit clauseUnit) {
+    final List<SyntaxNode<dynamic>> nodes = clauseUnit.nodes;
+    final verb = nodes.enumerate
+        .whereSecondType<VInf>()
+        .firstOrNull;
+    if (verb == null) return false;
+
+    final dirObj = nodes.enumerate
+        .whereSecondType<NP>()
+        .where((p) => p.second.caze == Case.acc)
+        .firstOrNull;
+
+    _replace(
+      nodes: nodes,
+      primary: verb,
+      result: VInfP(
+        inf: verb.second,
+        directObject: dirObj?.second
+      ),
+      secondary: [
+        if (dirObj != null) dirObj
+      ]
+    );
+
+    return true;
+  }
+}
+
 class VP$sTransformer extends Transformer {
   const VP$sTransformer();
 
@@ -175,14 +210,19 @@ class VP$sTransformer extends Transformer {
         .firstOrNull;
     if (verb == null) return false;
 
-    final dirObj = verb.second.verbKind == VerbKind.intrans
+    final Pair<int, Either<NP<dynamic>, VInfP>>? dirObj = verb.second.verbKind == VerbKind.intrans
         ? null
-        : nodes.enumerate
-        .whereSecondType<NP>()
-        .where((p) => p.second.caze == Case.acc)
-        .firstOrNull;
+        : (nodes.enumerate
+                .whereSecondType<NP<dynamic>>()
+                .where((p) => p.second.caze == Case.acc)
+                .map((p) => Pair(p.first, Either<NP<dynamic>, VInfP>.a(p.second)))
+                .toList()
+              ..addAll(nodes.enumerate
+                  .whereSecondType<VInfP>()
+                  .map((p) => Pair(p.first, Either<NP<dynamic>, VInfP>.b(p.second)))))
+            .minWithOrNull((v) => (v.first - verb.first).abs());
 
-    final indObj = dirObj == null
+    final indObj = dirObj == null || dirObj.second.isB
         ? null
         : nodes.enumerate
         .whereSecondType<NP>()
@@ -213,7 +253,10 @@ class VP$sTransformer extends Transformer {
     );
 
     _replace(nodes: nodes, primary: verb, result: vp, secondary: [
-      if (dirObj != null) dirObj,
+      if (dirObj != null) Pair(
+          dirObj.first,
+          dirObj.second.apply<SyntaxNode<dynamic>>((a) => a, (b) => b)
+      ),
       if (indObj != null) indObj,
       ...prepositionalPhrases,
       if (sbar != null) sbar,

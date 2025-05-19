@@ -105,6 +105,7 @@ ClauseUnit parse(Sentence sentence, {bool showIntermediate = true}) {
             selector: NearestIndexBiSelector(targetIndex: 0),
             reducer: NounRelClauseReducer(),
           ),
+          VInfPTransformer(),
           VP$sTransformer(),
           VP$lTransformer(),
           BiTransformer<NP<dynamic>, VP<dynamic>, S>(

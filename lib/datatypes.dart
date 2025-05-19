@@ -111,6 +111,43 @@ class Couple<T> extends Pair<T, T> {
   }
 }
 
+class Either<A, B> {
+  final A? _a;
+  final B? _b;
+  final bool _isA;
+
+  const Either.a(this._a) : _b = null, _isA = true;
+  const Either.b(this._b) : _a = null, _isA = false;
+
+  bool get isA => _isA;
+  bool get isB => !_isA;
+
+  A get a => isA ? _a as dynamic : throw "Cannot get a from Either.b";
+  B get b => isB ? _b as dynamic : throw "Cannot get b from Either.a";
+  dynamic get unsafeValue => isA ? _a : _b;
+
+  R apply<R>(R Function(A) aFunc, R Function(B) bFunc) {
+    if (isA) {
+      return aFunc.call(a);
+    } else {
+      return bFunc.call(b);
+    }
+  }
+
+  void run(void Function(A) aFunc, void Function(B) bFunc) {
+    if (isA) {
+      aFunc.call(a);
+    } else {
+      bFunc.call(b);
+    }
+  }
+
+  @override
+  String toString() {
+    return 'Either<${_isA ? 'A' : 'B'}>[${_isA ? _a : _b}]';
+  }
+}
+
 extension CouplableList<E> on List<E> {
   Couple<E> toCouple() {
     if (length != 2) {
