@@ -26,7 +26,7 @@ void main() {
   // "Cornelia quae cotidie ambulat edit glirem quod famem habet"
   // "Cornelia quae cotidie ambulat edit glirem quod famem habet et Romana est"
   // "Sextus qui cotidie celerrime ambulat dat glirem puellae Romanae"
-  const raw = "edunt glires qui trans Rhenum incolunt";
+  const raw = "pueri Romani edunt glires qui trans Rhenum incolunt quod amant in silva musculos devorare";
   final bundle = SentenceBundle.fromSentence(raw, debugMode: true);
 
   print("\n\nTranslating: $raw");

@@ -34,7 +34,7 @@ class VInf implements SyntaxNode<VInf> {
   Tense get tense => _verb.tense;
   VerbKind get verbKind => _verb.verbKind;
 
-  String translate() => "to ${_verb.primaryTranslation}";
+  String translate() => _verb.primaryTranslation; // verbs include 'to' automatically
 
   @override
   VInf shallowClone() => VInf(_verb);
