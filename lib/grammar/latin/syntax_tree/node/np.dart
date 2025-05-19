@@ -255,9 +255,6 @@ class NP$r implements NP<NP$r> {
   final RelClause _relClause;
 
   NP$r(this._noun, this._relClause) {
-    if (_noun.caze != _relClause.caze) {
-      throw ArgumentError("Cases do not match: ${_noun.caze} != ${_relClause.caze}");
-    }
     if (_noun.plural != _relClause.plural) {
       throw ArgumentError("Number doesn't match: ${_noun.plural ? 'plural' : 'singular'} != ${_relClause.plural ? 'plural' : 'singular'}");
     }
@@ -267,7 +264,6 @@ class NP$r implements NP<NP$r> {
   }
 
   static bool isValidPair(NP<dynamic> noun, RelClause relClause) =>
-      noun.caze == relClause.caze &&
       noun.plural == relClause.plural &&
       noun.gender.equals(relClause.gender);
 
