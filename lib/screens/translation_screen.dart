@@ -20,7 +20,9 @@ import 'package:discipulus/models/translation_state.dart';
 import 'package:discipulus/widgets/about_popup.dart';
 import 'package:discipulus/widgets/translation_input.dart';
 import 'package:discipulus/widgets/translation_output.dart';
+import 'package:discipulus/utils/splash_control/splash_control.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class TranslationScreen extends StatelessWidget {
@@ -30,6 +32,8 @@ class TranslationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    getSplashControl().sendSplashClearEvent();
+
     return AboutPopupShower(
       child: Scaffold(
         appBar: AppBar(
@@ -37,7 +41,10 @@ class TranslationScreen extends StatelessWidget {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Discipulus"),
+              Text(
+                "Discipulus",
+                style: GoogleFonts.monsieurLaDoulaiseTextTheme(theme.textTheme).headlineLarge,
+              ),
               OutlinedButton(
                 onPressed: () => showAboutPopup(context),
                 style: OutlinedButton.styleFrom(

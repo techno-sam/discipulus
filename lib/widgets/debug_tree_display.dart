@@ -16,9 +16,10 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// ignore_for_file: constant_identifier_names
+
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
-import 'package:discipulus/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

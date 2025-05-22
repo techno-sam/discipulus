@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,41 +18,104 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Machine Translating Latin 1a">
+  <meta name="description" content="Machine Translating Latin">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Monsieur+La+Doulaise&family=Fragment+Mono&display=swap" rel="stylesheet">
 
   <!-- iOS meta tags & icons -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="discipulus">
+  <meta name="apple-mobile-web-app-title" content="Discipulus">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>discipulus</title>
+  <title>Discipulus</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 200ms ease-out; /* Fade out transition */
+    }
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = null;
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
+    .splash-content {
+      text-align: center;
+    }
+
+    .splash-content img {
+      width: 150px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
+    .splash-content h1 {
+      font-family: "Monsieur La Doulaise", serif;
+      color: #333333;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 52px;
+    }
+
+    .splash-content h2 {
+      font-family: "Monsieur La Doulaise", serif;
+      color: #333333;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 36px;
+    }
+
+    /* Hide splash screen when it fades out */
+    /*noinspection CssUnusedSymbol*/
+    #splash-screen.hidden {
+      opacity: 0;
+      pointer-events: none; /* Prevent interaction with invisible elements */
+    }
+  </style>
 </head>
 <body>
+  <!-- Splash Screen -->
+  <div id="splash-screen">
+    <div class="splash-content">
+      <img src="icons/Icon-512.png" alt="Loading..." />
+      <h1>Discipulus</h1>
+      <h2>Sam Wagenaar</h2>
+    </div>
+  </div>
+
+  <!-- Flutter App -->
+  <script src="flutter_bootstrap.js" async></script>
   <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
+    // Ensure the splash screen is displayed for at least 3 seconds
+    const splashScreen = document.getElementById('splash-screen');
+    const splashMinimumTime = 3000; // 3 seconds
+    const startTime = Date.now();
+
+    window.addEventListener('flutter-splash-clear', function () {
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, splashMinimumTime - elapsedTime);
+
+      setTimeout(() => {
+        // Add the "hidden" class to trigger the fade-out effect
+        splashScreen.classList.add('hidden');
+
+        // Optionally, remove the splash screen from the DOM after the fade-out is complete
+        setTimeout(() => {
+          splashScreen.remove();
+        }, 500); // Match the CSS transition duration
+      }, remainingTime);
     });
   </script>
 </body>

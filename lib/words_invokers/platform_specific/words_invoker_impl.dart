@@ -17,5 +17,5 @@
  */
 
 export 'words_invoker_stub.dart'
-  if (dart.library.web) 'words_invoker_web.dart'
+  if (dart.library.html) 'words_invoker_web.dart'
   if (dart.library.io) 'words_invoker_io.dart';
