@@ -32,7 +32,8 @@ class Regexes {
   // https://regex101.com/r/8Jc46N/latest
   RegExp l01adjective = RegExp(r"^(?:01 )(?<split>[a-z.]+)(?:\s+ADJ\s+\d\s+\d\s+)(?<case>[a-zA-Z]+)(?:\s+)(?<person_pl>S|P)(?:\s+)(?<gender>X|M|F|N|C)(?:\s+)(?<comparison_type>X|POS|COMP|SUPER)$");
   // https://regex101.com/r/jLbBXW/latest
-  RegExp l02adjective = RegExp(r"^(?:02 )(?<parts>(?:[a-zA-Z\- ]*[a-zA-Z\-](?:,\s)){2,3}(?:[a-zA-Z\- ]*[a-zA-Z\-]))(?:\s+ADJ\s+\[[A-Z]+\])");
+  RegExp l02adjective = RegExp(r"^(?:02 )(?<parts>(?:[a-zA-Z\- ]*[a-zA-Z\-](?:[,;]\s)){2,3}(?:[a-zA-Z\- ]*[a-zA-Z\-]))(?:\s+ADJ\s+\[[A-Z]+\])");
+  RegExp l02adjectiveSplitter = RegExp(r"[,;]\s");
 
   // https://regex101.com/r/or0bc5/latest
   RegExp l01preposition = RegExp(r"^(?:01 )(?<word>[a-z]+)(?:\s+PREP\s+)(?<case>[a-zA-Z]+)$");

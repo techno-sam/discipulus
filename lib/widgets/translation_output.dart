@@ -16,8 +16,10 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/models/translation_state.dart';
 import 'package:discipulus/widgets/translation_card.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,10 +33,11 @@ class TranslationOutput extends StatelessWidget {
     final theme = Theme.of(context);
     final translationState = context.watch<TranslationState>();
 
-    final contents = translationState.result?.apply(
-      (success) => _SuccessOutput(success: success),
-      (error) => _ErrorOutput(error: error),
-    ) ?? const _EmptyOutput();
+    final result = translationState.result;
+
+    final contents = result == null
+        ? const _EmptyOutput()
+        : _FutureOutput(result: result);
 
     return Flexible(
       child: Card.outlined(
@@ -46,6 +49,48 @@ class TranslationOutput extends StatelessWidget {
           child: contents,
         ),
       ),
+    );
+  }
+}
+
+class _FutureOutput extends StatelessWidget {
+  final Future<Either<TranslationSuccess, TranslationError>> result;
+
+  const _FutureOutput({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: result,
+      builder: (context, snapshot) {
+        final theme = Theme.of(context);
+
+        if (kDebugMode) {
+          print("\tFutureBuilder: ${snapshot.connectionState} ${snapshot.hasData} ${snapshot.hasError}");
+        }
+
+        if (snapshot.hasData && snapshot.connectionState == ConnectionState.done) {
+          final either = snapshot.data!;
+          return either.apply(
+            (success) => _SuccessOutput(success: success),
+            (error) => _ErrorOutput(error: error),
+          );
+        } else if (snapshot.hasError && snapshot.connectionState == ConnectionState.done) {
+          return _ErrorOutput(error: TranslationError(error: snapshot.error));
+        } else {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Translation in progress",
+                style: theme.textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 8.0),
+              const CircularProgressIndicator(),
+            ],
+          );
+        }
+      },
     );
   }
 }

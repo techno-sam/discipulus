@@ -18,8 +18,10 @@
 
 // ignore_for_file: camel_case_types
 
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:io' show Platform;
+import 'package:discipulus/words_invokers/words_invoker.dart';
 import 'package:ffi/ffi.dart';
 
 typedef str_ptr = Pointer<Utf8>;
@@ -52,7 +54,7 @@ class NotSupportedPlatform extends Error {
   NotSupportedPlatform(String s);
 }
 
-class WordsLL {
+class WordsLL implements WordsInvoker {
   static late DynamicLibrary _lib;
   static bool _init = false;
 
@@ -94,4 +96,13 @@ class WordsLL {
   void _dropString(str_ptr string) {
     _lib.lookupFunction<drop_str_func, DropStr>('ffi_drop_string', isLeaf: true)(string);
   }
+
+  @override
+  String callWords(String word) => wordsDefault(word);
+
+  @override
+  FutureOr<String> callWordsAsync(String word) => wordsDefault(word);
+
+  @override
+  void dispose() {}
 }

@@ -22,12 +22,13 @@ import 'package:discipulus/grammar/latin/syntax_tree/base.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/node/nodes.dart';
 import 'package:discipulus/grammar/latin/syntax_tree/parser.dart' as parser;
 
-void main() {
+void main() async {
   // "Cornelia quae cotidie ambulat edit glirem quod famem habet"
   // "Cornelia quae cotidie ambulat edit glirem quod famem habet et Romana est"
   // "Sextus qui cotidie celerrime ambulat dat glirem puellae Romanae"
-  const raw = "pueri Romani edunt glires qui trans Rhenum incolunt quod amant in silva musculos devorare";
-  final bundle = SentenceBundle.fromSentence(raw, debugMode: true);
+  // const raw = "pueri Romani edunt glires qui trans Rhenum incolunt quod amant in silva musculos devorare";
+  const raw = "Cornelia et pueri Romani timidi magnos glires celeriter edunt in foro";
+  final bundle = await SentenceBundle.fromSentenceAsync(raw, debugMode: true);
 
   print("\n\nTranslating: $raw");
 

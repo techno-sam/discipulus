@@ -456,7 +456,7 @@ class L02Adjective extends Line {
 
     String parts_ = match.namedGroup("parts")!;
 
-    List<String> parts = parts_.split(", ");
+    List<String> parts = parts_.split(re.l02adjectiveSplitter);
     return L02Adjective(original: text, parts: parts);
   }
 }

@@ -16,16 +16,17 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
+
 import 'package:discipulus/datatypes.dart';
-import 'package:discipulus/ffi/words_low_level.dart';
 import 'package:discipulus/grammar/latin/adverb.dart';
 import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyAdverbs, applyConjunctions, applyPrepositions, splitClauses;
+import 'package:discipulus/words_invokers/words_invoker.dart';
 import 'package:discipulus/utils/colors.dart';
 import 'package:discipulus/utils/print_buffer.dart';
 import 'package:discipulus/utils/tuning.dart' as tuning;
-import 'package:flutter/foundation.dart';
 
 import 'lines.dart';
 import 'noun.dart';
@@ -104,9 +105,9 @@ class SentenceBundle {
 
   const SentenceBundle({required this.words, required this.original});
 
-  factory SentenceBundle.fromSentence(String text, {bool debugMode = kDebugMode, void Function(String) print = _printBackup, WordsLL? backend}) {
+  factory SentenceBundle.fromSentence(String text, {bool debugMode = false, void Function(String) print = _printBackup, WordsInvoker? backend}) {
     final originalText = text;
-    WordsLL wordsLL = backend ?? WordsLL(debugMode: debugMode);
+    WordsInvoker wordsLL = backend ?? WordsInvoker.create(debugMode: debugMode);
     text = text.toLowerCase();
     List<List<Word>> processedWords = [];
 
@@ -122,7 +123,7 @@ class SentenceBundle {
         continue;
       }
 
-      final String linesText = wordsLL.wordsDefault(word);
+      final String linesText = wordsLL.callWords(word);
       final List<Line> lines = parseToLines(linesText);
       final List<Word> partsOfSpeech = parseToPOS(lines, print: print).where((w) {
         if (tuning.whenDoesNotExist) {
@@ -140,6 +141,47 @@ class SentenceBundle {
     }
 
     return SentenceBundle(words: processedWords, original: originalText);
+  }
+
+  static Future<SentenceBundle> fromSentenceAsync(String text, {bool debugMode = false, void Function(String) print = _printBackup, WordsInvoker? backend}) async {
+    final originalText = text;
+    WordsInvoker wordsLL = backend ?? WordsInvoker.create(debugMode: debugMode);
+    text = text.toLowerCase();
+
+    if (text.contains(",") || text.contains(":") || text.contains(";")) {
+      throw ArgumentError.value(text, "text", "Sentence cannot contain punctuation");
+    }
+
+    List<String> words = text.split(" ").where((s) => s.isNotEmpty).toList();
+
+    Iterable<Future<List<Word>>> inProgressWords = words.map((w) => parseWordAsync(w, wordsLL, print));
+
+    List<List<Word>> processedWords = await Future.wait(inProgressWords);
+
+    return SentenceBundle(words: processedWords, original: originalText);
+  }
+
+  static Future<List<Word>> parseWordAsync(String word, WordsInvoker wordsLL, void Function(String) print) async {
+    final List<Noun>? properName = properNames.parse(word);
+    if (properName != null && properName.isNotEmpty) {
+      return properName;
+    }
+
+    final String linesText = await wordsLL.callWordsAsync(word);
+    final List<Line> lines = parseToLines(linesText);
+    final List<Word> partsOfSpeech = parseToPOS(lines, print: print).where((w) {
+      if (tuning.whenDoesNotExist) {
+        if (w is Adverb && w.parts[0] == "cum") {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+    if (partsOfSpeech.isEmpty) {
+      final String indentedOutput = linesText.split("\n").map((s) => "> $s").join("\n");
+      throw "Word could not be translated: \"$word\"\n$indentedOutput";
+    }
+    return partsOfSpeech;
   }
 
   List<Sentence> allPossibleSentences() {
