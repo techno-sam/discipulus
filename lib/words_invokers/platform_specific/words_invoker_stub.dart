@@ -16,16 +16,8 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'dart:async';
+import '../words_invoker.dart';
 
-import 'package:discipulus/words_invokers/platform_specific/words_invoker_impl.dart';
-
-abstract interface class WordsInvoker {
-  String callWords(String word);
-  FutureOr<String> callWordsAsync(String word);
-  void dispose();
-
-  static WordsInvoker create({bool debugMode = false}) {
-    return createWordsInvoker(debugMode: debugMode);
-  }
+WordsInvoker createWordsInvoker({bool debugMode = false}) {
+  throw UnsupportedError('Platform not supported');
 }
