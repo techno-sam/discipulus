@@ -45,6 +45,7 @@ const Map<Gender, List<String>> _endingSets = {
 
 class ProperName {
   final Map<String, List<Noun>> _stringForms;
+  // ignore: unused_field
   final Map<Case, Noun> _forms;
   final Map<Case, String> _reverseForms;
 

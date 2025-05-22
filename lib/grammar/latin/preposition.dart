@@ -17,11 +17,10 @@
  */
 
 import 'package:discipulus/datatypes.dart';
-import 'package:discipulus/grammar/latin/adjective.dart';
-import 'package:discipulus/grammar/latin/lines.dart';
-import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/utils/colors.dart';
 
+import 'lines.dart';
+import 'adjective.dart';
 import 'noun.dart';
 import 'verb.dart';
 

@@ -19,7 +19,6 @@
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart' as english;
 import 'package:discipulus/grammar/latin/conjunction.dart';
-import 'package:discipulus/grammar/latin/lines.dart';
 import 'package:discipulus/grammar/latin/noun.dart';
 import 'package:discipulus/grammar/latin/preposition.dart';
 import 'package:discipulus/grammar/latin/sentence.dart';

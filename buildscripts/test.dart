@@ -70,7 +70,7 @@ void main() {
   for (final pos in vocatForms) {
     print("\t$pos");
   }
-  final Verb? vocatVerb = vocatForms.where((pos) => pos is Verb).map((pos) => pos as Verb).firstOrNull;
+  final Verb? vocatVerb = vocatForms.whereType<Verb>().firstOrNull;
   if (vocatVerb != null) {
     printTranslationTable(vocatVerb);
   }

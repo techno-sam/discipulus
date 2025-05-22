@@ -19,7 +19,6 @@
 import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/ffi/words_low_level.dart';
 import 'package:discipulus/grammar/latin/adverb.dart';
-import 'package:discipulus/grammar/latin/conjunction.dart';
 import 'package:discipulus/grammar/latin/proper_names.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/sentence_parsers.dart';
 import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show applyAdjectives, applyAdverbs, applyConjunctions, applyPrepositions, splitClauses;
@@ -201,7 +200,7 @@ class SentenceBundle {
     if (allTranslations.length > 1) {
       print("other translations:");
       for (String translation in allTranslations.skip(1)) {
-        print("\t${Style.BRIGHT}$original${Style.RESET_ALL} ${Fore.YELLOW}->${Fore.RESET} ${translation}");
+        print("\t${Style.BRIGHT}$original${Style.RESET_ALL} ${Fore.YELLOW}->${Fore.RESET} $translation");
       }
     }
   }

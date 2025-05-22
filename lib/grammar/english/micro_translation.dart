@@ -147,7 +147,6 @@ String translateVerb(Verb verb, [Noun? subject, bool subjectNounFromSuperClause 
 }
 
 void printTranslationTable(Verb verb) {
-  final Noun bob = Noun.bob;
   Map<Person, String> table = {
     for (final person in Person.variants())
       person: translateVerb(verb.copyWith(person: person), Noun.bob)

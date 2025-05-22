@@ -16,7 +16,6 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'package:discipulus/datatypes.dart';
 import 'package:discipulus/grammar/english/micro_translation.dart';
 import 'package:discipulus/utils/colors.dart';
 
