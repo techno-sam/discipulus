@@ -25,6 +25,7 @@ import 'package:discipulus/grammar/latin/sentence_parsing/utils.dart' show apply
 import 'package:discipulus/utils/colors.dart';
 import 'package:discipulus/utils/print_buffer.dart';
 import 'package:discipulus/utils/tuning.dart' as tuning;
+import 'package:flutter/foundation.dart';
 
 import 'lines.dart';
 import 'noun.dart';
@@ -103,9 +104,9 @@ class SentenceBundle {
 
   const SentenceBundle({required this.words, required this.original});
 
-  factory SentenceBundle.fromSentence(String text, {required bool debugMode, void Function(String) print = _printBackup}) {
+  factory SentenceBundle.fromSentence(String text, {bool debugMode = kDebugMode, void Function(String) print = _printBackup, WordsLL? backend}) {
     final originalText = text;
-    WordsLL wordsLL = WordsLL(debugMode: debugMode);
+    WordsLL wordsLL = backend ?? WordsLL(debugMode: debugMode);
     text = text.toLowerCase();
     List<List<Word>> processedWords = [];
 

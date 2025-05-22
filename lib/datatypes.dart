@@ -467,6 +467,28 @@ extension StableSort<E> on List<E> {
   }
 }
 
+extension PartialMerge<E> on Iterable<E> {
+  Iterable<E> partialMerge(E? Function(E acc, E v) merger) sync* {
+    E? acc;
+    for (final v in this) {
+      if (acc == null) {
+        acc = v;
+      } else {
+        final newAcc = merger.call(acc, v);
+        if (newAcc != null) {
+          acc = newAcc;
+        } else {
+          yield acc;
+          acc = v;
+        }
+      }
+    }
+    if (acc != null) {
+      yield acc;
+    }
+  }
+}
+
 extension PluralLabeledInt on int {
   String labeled(String label) {
     return "$this ${pluralizeNoun(label, this != 1)}";

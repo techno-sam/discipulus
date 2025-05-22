@@ -479,7 +479,7 @@ class SequentialTransformer extends Transformer {
   const SequentialTransformer({
     required String label,
     required List<Transformer> children,
-    void Function(String, ClauseUnit)? onTransform
+    void Function(String, ClauseUnit)? onTransform,
   }): _label = label, _children = children, _onTransform = onTransform;
 
   @override
