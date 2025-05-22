@@ -1,6 +1,8 @@
-# discipulus
+# <img src="web/icons/Icon-192.png" alt="Discipulus Logo" width="24px"/> Discipulus
 
 Machine Translating Latin!
+
+**[Try me!](https://techno-sam.github.io/discipulus/)**
 
 ## What to look at
 
@@ -116,6 +118,8 @@ S -> Cornelia and the timid Roman boys eat the dormouses in the market
 ## Running the Code
 
 It's not currently very easy (and there is not yet a GUI), but it is possible.
+
+You may prefer to use the [web version](https://techno-sam.github.io/discipulus/) instead.
 
 ### Prerequisites
 
