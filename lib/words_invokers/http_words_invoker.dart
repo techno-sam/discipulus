@@ -33,8 +33,8 @@ class HTTPWordsInvoker implements WordsInvoker {
 
   @override
   FutureOr<String> callWordsAsync(String word) async {
-    final response = await _client.get(Uri.http(
-      '129.159.36.220',
+    final response = await _client.get(Uri.https(
+      'words-api.samwagenaar.net',
       '/words',
       {'word': word},
     ));
